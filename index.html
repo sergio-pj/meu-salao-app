@@ -3,27 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Salão&Beleza</title>
+    <title>Login - Salão&Beleza</title>
+    <!-- Vamos reutilizar o mesmo CSS do cadastro -->
     <link rel="stylesheet" href="src/styles/style.css">
 </head>
-<body class="login-dark">
-    <div class="bemvindo">
-        Olá, seja bem-vindo ao Salão ***
-    </div>
-    <main>
-        <div class="login-container">
-            <form id="form-login">
-                <label for="usuario">Usuário:</label>
-                <input type="text" id="usuario" name="usuario" required>
-
-                <label for="senha">Senha:</label>
-                <input type="password" id="senha" name="senha" required>
-
+<body>
+    <header>
+        <h1>Salão&Beleza</h1>
+        <h2>Acesse sua conta</h2>
+    </header>
+    <main class="container">
+        <section class="login-section">
+            <h2>Login</h2>
+            <form id="login-form">
+                <div class="campo">
+                    <label for="email-login">Email:</label>
+                    <input type="email" id="email-login" required>
+                </div>
+                <div class="campo">
+                    <label for="senha-login">Senha:</label>
+                    <input type="password" id="senha-login" required>
+                </div>
                 <button type="submit">Entrar</button>
             </form>
-            <div id="mensagem"></div>
-        </div>
+            <p class="cadastro-link">Não tem uma conta? <a href="src/pages/cadastro.html">Cadastre-se</a></p>
+            <div id="mensagem-login"></div>
+        </section>
     </main>
+    <!-- Script para a lógica de login -->
     <script src="src/scripts/login.js"></script>
 </body>
 </html>
