@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salão&Beleza</title>
+    <script src="../scripts/auth.js" defer></script>
+    <link rel="stylesheet" href="../styles/style.css">
+</head>
+<body>
+    <header>
+        <h1>Salão&Beleza</h1>
+        <nav>
+            <a href="../../index.html">Sair</a>
+        </nav>
+    </header>
+    <main class="layout">
+        <div class="abas-lateral">
+            <button class="aba-btn active" onclick="mostrarAba('agendamento')">✂️ Agendar Horário</button>
+            <button class="aba-btn" onclick="mostrarAba('historico')">📅 Agendamentos</button>
+            <button class="aba-btn" onclick="mostrarAba('financeiro')">💰 Financeiro</button>
+        </div>
+        <div class="conteudo-abas">
+            <section id="agendamento" class="aba-conteudo">
+                <h2>✂️ Agendar Horário</h2>
+                <form id="agendamento-form">
+                    <div class="linha-campos">
+                        <div class="campo">
+                            <label for="cliente-nome">Nome:</label>
+                            <input type="text" id="cliente-nome" required>
+                        </div>
+                        <div class="campo">
+                            <label for="servico">Serviço:</label>
+                            <select id="servico" required>
+                                <option value="corte">Corte</option>
+                                <option value="manicure">Manicure</option>
+                                <option value="trança">Trança</option>
+                                <option value="luzes">Luzes</option>
+                            </select>
+                        </div>
+                        <div class="campo">
+                            <label for="data">Data:</label>
+                            <input type="date" id="data" required>
+                        </div>
+                        <div class="campo">
+                            <label for="hora">Hora:</label>
+                            <input type="time" id="hora" required>
+                        </div>
+                    </div>
+                    <button type="submit">Agendar</button>
+                </form>
+                <div id="mensagem-agendamento"></div>
+            </section>
+            <section id="historico" class="aba-conteudo" style="display:none;">
+                <h2>📅 Histórico de Agendamentos</h2>
+                <div class="filtro-mes">
+                    <label for="mes-historico">Filtrar por mês:</label>
+                    <select id="mes-historico"></select>
+                </div>
+                <ul id="historico-agendamentos"></ul>
+            </section>
+            <section id="financeiro" class="aba-conteudo" style="display:none;">
+                <h2>💰 Financeiro</h2>
+                <!-- Aqui você pode listar os pagamentos registrados, com status -->
+                <ul id="lista-financeiro"></ul>
+            </section>
+        </div>
+    </main>
+    <div id="alerta-edicao" style="display:none;"></div>
+    <script src="../scripts/principal.js"></script>
+</body>
+</html>

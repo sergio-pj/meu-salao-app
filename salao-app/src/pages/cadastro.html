@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bem-vindo ao Salão&Beleza - Cadastro</title>
+    <link rel="stylesheet" href="../styles/style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Bem-vindo ao Salão&Beleza</h1>
+    </header>
+    <main class="container">
+      <section class="cadastro-section">
+        <h2>Cadastre seu Salão</h2>
+        <form id="cadastro-form">
+          <div class="campo">
+            <label for="nome-salao">Nome do Salão:</label>
+            <input type="text" id="nome-salao" required />
+          </div>
+          <div class="campo">
+            <label for="email-cadastro">Email:</label>
+            <input type="email" id="email-cadastro" required />
+          </div>
+          <div class="campo">
+            <label for="senha-cadastro">Senha:</label>
+            <input type="password" id="senha-cadastro" required />
+          </div>
+          <div class="campo">
+            <label for="confirmar-senha">Confirmar Senha:</label>
+            <input type="password" id="confirmar-senha" required />
+          </div>
+          <button type="submit">Cadastrar</button>
+        </form>
+        <p class="login-link">
+          Já tem uma conta? <a href="../../index.html">Faça Login</a>
+        </p>
+        <div id="mensagem-cadastro"></div>
+      </section>
+    </main>
+    <script src="../scripts/cadastro.js"></script>
+  </body>
+</html>
