@@ -402,6 +402,38 @@ footer {
     gap: 8px;
 }
 
+.filtros-financeiro {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.filtro-grupo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 160px;
+}
+
+.filtro-grupo label {
+    color: #967166;
+    font-weight: 600;
+}
+
+.filtro-grupo select,
+.filtro-mes select {
+    padding: 9px 10px;
+    border-radius: 8px;
+    border: 1px solid #d8d2d3;
+    background: #fff;
+}
+
+.tabela-scroll {
+    width: 100%;
+    overflow-x: auto;
+}
+
 .tabela-historico, .tabela-financeiro {
     width: 100%;
     border-collapse: collapse;
@@ -483,4 +515,760 @@ footer {
     cursor: pointer;
     margin-right: 8px;
     vertical-align: middle;
+}
+
+.resumo-financeiro {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.resumo-card {
+    background: #fff;
+    border: 1px solid #f0e4e6;
+    border-radius: 12px;
+    padding: 14px 16px;
+    box-shadow: 0 2px 8px rgba(180,180,180,0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.resumo-card strong {
+    color: #6c2bd9;
+    font-size: 1.2em;
+}
+
+.resumo-card small,
+.financeiro-vazio {
+    color: #6c5f5b;
+}
+
+.resumo-label {
+    color: #967166;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.82em;
+    letter-spacing: 0.04em;
+}
+
+.resumo-card-total {
+    background: linear-gradient(135deg, #f8f1f7, #fff);
+}
+
+@media (max-width: 900px) {
+    header {
+        padding: 14px 16px 12px;
+    }
+
+    header h1 {
+        font-size: 1.9em;
+        margin-top: 4px;
+    }
+
+    nav {
+        top: 14px;
+        right: 16px;
+    }
+
+    .layout {
+        margin: 20px 16px 32px;
+        flex-direction: column;
+        min-height: auto;
+    }
+
+    .abas-lateral {
+        flex-direction: row;
+        min-width: 0;
+        padding: 12px;
+        border-radius: 14px 14px 0 0;
+        overflow-x: auto;
+        gap: 8px;
+    }
+
+    .abas-lateral .aba-btn {
+        border-radius: 999px;
+        margin: 0;
+        padding: 14px 18px;
+        white-space: nowrap;
+        text-align: center;
+    }
+
+    .conteudo-abas {
+        padding: 24px 18px;
+    }
+
+    #agendamento-form {
+        max-width: 100%;
+        padding: 18px 14px;
+    }
+
+    .linha-campos {
+        gap: 12px;
+    }
+
+    .campo {
+        flex: 1 1 220px;
+    }
+}
+
+@media (max-width: 640px) {
+    body {
+        background-attachment: scroll;
+    }
+
+    header {
+        border-bottom-left-radius: 18px;
+        border-bottom-right-radius: 18px;
+        padding-top: 18px;
+    }
+
+    header h1 {
+        font-size: 1.65em;
+    }
+
+    nav {
+        position: static;
+        margin-top: 10px;
+    }
+
+    main {
+        margin: 20px 12px;
+    }
+
+    section {
+        padding: 18px 14px;
+    }
+
+    .layout {
+        margin: 16px 12px 24px;
+    }
+
+    .abas-lateral {
+        padding: 10px;
+    }
+
+    .abas-lateral .aba-btn {
+        font-size: 0.95em;
+        padding: 12px 14px;
+    }
+
+    .conteudo-abas {
+        padding: 18px 12px;
+    }
+
+    .linha-campos {
+        flex-direction: column;
+    }
+
+    .campo,
+    .filtro-grupo {
+        min-width: 100%;
+    }
+
+    .filtro-mes,
+    .filtros-financeiro {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .tabela-historico,
+    .tabela-financeiro {
+        min-width: 680px;
+    }
+
+    .resumo-financeiro {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Refinos visuais mobile e tablet */
+@media (max-width: 900px) {
+    .layout {
+        background: rgba(255, 255, 255, 0.84);
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 18px 40px rgba(136, 101, 83, 0.14);
+        backdrop-filter: blur(8px);
+    }
+
+    .abas-lateral {
+        background: linear-gradient(180deg, rgba(248, 236, 239, 0.98), rgba(244, 234, 240, 0.92));
+        box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    .abas-lateral .aba-btn {
+        background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+        box-shadow: 0 10px 22px rgba(124, 58, 237, 0.2);
+    }
+
+    .conteudo-abas {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.44), rgba(255, 255, 255, 0.18));
+    }
+
+    .aba-conteudo {
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        border-radius: 22px;
+        box-shadow: 0 16px 34px rgba(180, 160, 150, 0.14);
+    }
+
+    #agendamento-form {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(249, 245, 255, 0.94));
+        border: 1px solid rgba(124, 58, 237, 0.08);
+        border-radius: 18px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 10px 24px rgba(124, 58, 237, 0.08);
+    }
+
+    .campo {
+        gap: 6px;
+    }
+
+    .campo label,
+    .filtro-grupo label,
+    .filtro-mes label {
+        font-weight: 700;
+        color: #7c3aed;
+    }
+
+    .campo input,
+    .campo select,
+    .filtro-grupo select,
+    .filtro-mes select {
+        min-height: 48px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid #e0d3ff;
+        background: #fcfbff;
+        box-shadow: inset 0 1px 2px rgba(124, 58, 237, 0.04);
+    }
+
+    .campo input:focus,
+    .campo select:focus,
+    .filtro-grupo select:focus,
+    .filtro-mes select:focus {
+        outline: none;
+        border-color: rgba(124, 58, 237, 0.55);
+        box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12);
+    }
+
+    #agendamento-form button[type="submit"] {
+        min-height: 50px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+        box-shadow: 0 14px 28px rgba(124, 58, 237, 0.18);
+    }
+
+    .resumo-card {
+        border-radius: 16px;
+        box-shadow: 0 10px 24px rgba(180, 180, 180, 0.08);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(252, 248, 255, 0.95));
+    }
+
+    .tabela-scroll {
+        border-radius: 16px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(247, 243, 255, 0.9));
+    }
+}
+
+@media (max-width: 640px) {
+    header {
+        padding: 16px 14px 14px;
+        border-bottom-left-radius: 22px;
+        border-bottom-right-radius: 22px;
+        box-shadow: 0 10px 26px rgba(180, 180, 180, 0.14);
+    }
+
+    header h1 {
+        font-size: 1.75em;
+        margin-top: 0;
+        text-shadow: 0 6px 18px rgba(124, 58, 237, 0.16);
+    }
+
+    #boas-vindas-salao {
+        font-size: 0.98em;
+        color: #6c5f5b;
+        margin-top: 2px;
+    }
+
+    nav {
+        margin-top: 10px;
+    }
+
+    nav a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 88px;
+        padding: 10px 16px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+        box-shadow: 0 10px 22px rgba(124, 58, 237, 0.22);
+    }
+
+    .layout {
+        margin: 14px 10px 22px;
+        border-radius: 22px;
+    }
+
+    .abas-lateral {
+        padding: 10px 8px 12px;
+        gap: 8px;
+        overflow-x: auto;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(124, 58, 237, 0.4) transparent;
+    }
+
+    .abas-lateral::-webkit-scrollbar {
+        height: 4px;
+    }
+
+    .abas-lateral::-webkit-scrollbar-thumb {
+        background: rgba(124, 58, 237, 0.35);
+        border-radius: 999px;
+    }
+
+    .abas-lateral .aba-btn {
+        flex: 0 0 auto;
+        padding: 12px 14px;
+        font-size: 0.93em;
+        border-radius: 999px;
+        text-align: center;
+        white-space: nowrap;
+        margin: 0;
+        box-shadow: 0 8px 18px rgba(124, 58, 237, 0.2);
+    }
+
+    .conteudo-abas {
+        padding: 14px 10px 18px;
+    }
+
+    .aba-conteudo {
+        padding: 20px 14px;
+        border-radius: 20px;
+    }
+
+    .linha-campos {
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .campo,
+    .filtro-grupo {
+        min-width: 100%;
+        flex: none;
+    }
+
+    #agendamento-form {
+        padding: 16px 14px;
+        margin: 18px auto 12px;
+    }
+
+    .filtro-mes,
+    .filtros-financeiro {
+        gap: 10px;
+    }
+
+    .tabela-historico,
+    .tabela-financeiro {
+        min-width: 620px;
+    }
+
+    .resumo-financeiro {
+        gap: 10px;
+    }
+
+    .resumo-card {
+        padding: 14px;
+    }
+
+    .editando-alerta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px 14px;
+        font-size: 0.96em;
+    }
+}
+
+/* Novo cabeçalho e refinamento visual geral */
+header {
+    background: linear-gradient(135deg, rgba(253, 248, 244, 0.96), rgba(245, 236, 229, 0.92));
+    border-bottom-left-radius: 32px;
+    border-bottom-right-radius: 32px;
+    box-shadow: 0 14px 36px rgba(128, 99, 80, 0.12);
+    backdrop-filter: blur(12px);
+}
+
+header h1 {
+    color: #7a4b2f;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    margin-top: 0;
+    text-shadow: none;
+}
+
+header h2,
+header p {
+    color: #6c5f5b;
+    font-size: 1.05em;
+    font-weight: 600;
+    margin-top: 6px;
+}
+
+nav a {
+    background: linear-gradient(135deg, #7c3aed, #5b21b6);
+}
+
+.container {
+    max-width: 1120px;
+    margin: 38px auto;
+    padding: 0 20px;
+}
+
+.login-section,
+.cadastro-section {
+    max-width: 560px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.86);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    border-radius: 24px;
+    box-shadow: 0 24px 48px rgba(144, 116, 97, 0.12);
+    backdrop-filter: blur(8px);
+}
+
+.login-section h2,
+.cadastro-section h2 {
+    font-size: 1.5em;
+    color: #7a4b2f;
+    margin-bottom: 8px;
+}
+
+.login-section form,
+.cadastro-section form {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 245, 255, 0.95));
+    border-radius: 18px;
+    border: 1px solid rgba(124, 58, 237, 0.08);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 10px 24px rgba(124, 58, 237, 0.06);
+}
+
+.login-section button[type="submit"],
+.cadastro-section button[type="submit"] {
+    min-height: 50px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+    box-shadow: 0 14px 28px rgba(124, 58, 237, 0.18);
+}
+
+.login-section .campo,
+.cadastro-section .campo {
+    gap: 6px;
+}
+
+.login-section .campo input,
+.cadastro-section .campo input {
+    min-height: 48px;
+    border-radius: 12px;
+    border: 1px solid #e4d8ff;
+    background: #fcfbff;
+}
+
+.cadastro-link,
+.login-link {
+    margin-top: 18px;
+    color: #6c5f5b;
+    font-weight: 500;
+}
+
+.cadastro-link a,
+.login-link a {
+    color: #6d28d9;
+    font-weight: 700;
+}
+
+.historico-semana {
+    margin-bottom: 20px;
+}
+
+.historico-semana-titulo {
+    font-size: 1.08em;
+    color: #7a4b2f;
+    margin-bottom: 12px;
+}
+
+.lista-cards {
+    display: grid;
+    gap: 12px;
+}
+
+.registro-card {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(251, 247, 255, 0.96));
+    border: 1px solid rgba(233, 222, 239, 0.9);
+    border-radius: 18px;
+    padding: 14px;
+    box-shadow: 0 10px 26px rgba(173, 152, 141, 0.1);
+}
+
+.registro-card-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.registro-card-topo strong {
+    color: #5c4033;
+    font-size: 1.03em;
+}
+
+.registro-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #f3e8ff;
+    color: #6d28d9;
+    font-weight: 700;
+    font-size: 0.82em;
+    text-transform: capitalize;
+}
+
+.registro-badge-pago {
+    background: #e8fff1;
+    color: #217a4c;
+}
+
+.registro-linha {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(236, 228, 227, 0.8);
+}
+
+.registro-linha:last-of-type {
+    border-bottom: none;
+}
+
+.registro-linha span {
+    color: #967166;
+    font-size: 0.92em;
+    font-weight: 600;
+}
+
+.registro-linha strong {
+    color: #5f524f;
+    text-align: right;
+}
+
+.registro-acoes {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.registro-acoes .btn-acao {
+    flex: 1;
+    min-height: 44px;
+}
+
+.check-pago-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    color: #5f524f;
+    font-weight: 600;
+}
+
+.check-pago-card .check-pago {
+    margin-right: 0;
+}
+
+@media (max-width: 900px) {
+    .container {
+        padding: 0 14px;
+    }
+
+    .login-section,
+    .cadastro-section {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    header {
+        padding: 18px 14px 16px;
+    }
+
+    header h1 {
+        font-size: 1.9em;
+    }
+
+    header h2,
+    header p {
+        font-size: 0.98em;
+    }
+
+    .container {
+        margin: 22px auto;
+        padding: 0 12px;
+    }
+
+    .login-section,
+    .cadastro-section {
+        padding: 20px 14px;
+        border-radius: 22px;
+    }
+
+    .login-section h2,
+    .cadastro-section h2 {
+        font-size: 1.35em;
+    }
+
+    .registro-card {
+        padding: 14px 12px;
+        border-radius: 16px;
+    }
+
+    .registro-card-topo {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .registro-linha {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .registro-linha strong {
+        text-align: left;
+    }
+
+    .registro-acoes {
+        flex-direction: column;
+    }
+}
+
+body {
+    color: #4f433e;
+}
+
+header {
+    background: linear-gradient(135deg, rgba(252, 246, 240, 0.97), rgba(243, 231, 222, 0.94));
+    box-shadow: 0 14px 36px rgba(114, 88, 70, 0.12);
+}
+
+header h1 {
+    color: #7a4f3a;
+}
+
+header h2,
+header p,
+#boas-vindas-salao {
+    color: #6c5f5b;
+}
+
+nav a,
+.aba-btn,
+button[type="submit"],
+#agendamento-form button[type="submit"],
+.login-section button[type="submit"],
+.cadastro-section button[type="submit"] {
+    background: linear-gradient(135deg, #b86b4b, #8f4f38);
+    box-shadow: 0 14px 28px rgba(143, 79, 56, 0.2);
+}
+
+nav a:hover,
+.aba-btn:hover,
+.aba-btn.active,
+button[type="submit"]:hover,
+#agendamento-form button[type="submit"]:hover,
+.login-section button[type="submit"]:hover,
+.cadastro-section button[type="submit"]:hover {
+    background: linear-gradient(135deg, #9e5a40, #77402e);
+}
+
+.abas-lateral {
+    background: linear-gradient(180deg, rgba(247, 237, 229, 0.98), rgba(241, 229, 222, 0.94));
+}
+
+.abas-lateral .aba-btn {
+    color: #fffaf8;
+}
+
+section h2,
+.login-section h2,
+.cadastro-section h2,
+.historico-semana-titulo,
+.campo label,
+.filtro-grupo label,
+.filtro-mes label,
+.resumo-label {
+    color: #8a543d;
+}
+
+.campo input,
+.campo select,
+.filtro-grupo select,
+.filtro-mes select,
+.login-section .campo input,
+.cadastro-section .campo input {
+    border-color: #ead7cc;
+    background: #fffdfb;
+}
+
+.campo input:focus,
+.campo select:focus,
+.filtro-grupo select:focus,
+.filtro-mes select:focus,
+.login-section .campo input:focus,
+.cadastro-section .campo input:focus {
+    border-color: rgba(184, 107, 75, 0.55);
+    box-shadow: 0 0 0 4px rgba(184, 107, 75, 0.12);
+}
+
+.registro-badge {
+    background: #f5e4db;
+    color: #8f4f38;
+}
+
+.registro-badge-pago {
+    background: #e7f5eb;
+    color: #2d6b46;
+}
+
+.resumo-card strong {
+    color: #8f4f38;
+}
+
+.resumo-card-total {
+    background: linear-gradient(135deg, #fff8f2, #fffdfb);
+}
+
+.btn-acao {
+    background: #b8795d;
+}
+
+.btn-acao:hover {
+    background: #99624a;
+}
+
+.btn-excluir {
+    background: #d36d67;
+}
+
+.btn-excluir:hover {
+    background: #b44d47;
+}
+
+.cadastro-link a,
+.login-link a {
+    color: #8f4f38;
 }

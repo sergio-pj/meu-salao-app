@@ -1,44 +1,52 @@
 # Salão App
 
-Este projeto é um aplicativo web para agendamento e cadastro em um salão de beleza. Ele permite que os usuários se cadastrem e agendem horários para serviços oferecidos pelo salão.
+Aplicação web para cadastro, login e gestão básica de agendamentos de um salão de beleza.
 
-## Estrutura do Projeto
+## Como executar
 
+O projeto foi ajustado para usar Supabase Cloud diretamente no frontend. Com isso, ele pode ser aberto sem Node.js local, o que é adequado para ambientes corporativos com restrições de instalação.
+
+1. Configure no Supabase:
+
+   - Auth com email/senha ativado
+   - Tabelas public.saloes, public.agendamentos e public.pagamentos criadas
+   - Políticas RLS aplicadas
+
+2. Abra o arquivo index.html ou publique os arquivos em qualquer hospedagem estática.
+
+3. Faça cadastro e login normalmente.
+
+## Integração atual
+
+- O frontend usa Supabase Auth para cadastro e login.
+- Os dados do salão, agendamentos e pagamentos são salvos no banco do Supabase.
+- Não há mais dependência de MongoDB, JSONBin ou Node.js para uso básico da aplicação.
+
+## Estrutura atual
+
+```text
+.
+├── api/
+│   ├── cadastro.js
+│   └── login.js
+├── index.html
+├── src/
+│   ├── pages/
+│   │   ├── cadastro.html
+│   │   └── principal.html
+│   ├── scripts/
+│   │   ├── auth.js
+│   │   ├── cadastro.js
+│   │   ├── login.js
+│   │   ├── principal.js
+│   │   └── supabase.js
+│   └── styles/
+│       └── style.css
+└── package.json
 ```
-salao-app
-├── src
-│   ├── index.html          # Página inicial do aplicativo
-│   ├── styles
-│   │   └── style.css       # Estilos CSS do aplicativo
-│   ├── scripts
-│   │   ├── app.js          # Script principal do aplicativo
-│   │   ├── agendamento.js   # Lógica de agendamento
-│   │   └── cadastro.js      # Lógica de cadastro
-│   └── pages
-│       ├── agendamento.html # Página de agendamento
-│       └── cadastro.html    # Página de cadastro
-└── README.md               # Documentação do projeto
-```
 
-## Instalação
+## Observações importantes
 
-1. Clone o repositório:
-   ```
-   git clone <URL_DO_REPOSITORIO>
-   ```
-
-2. Navegue até o diretório do projeto:
-   ```
-   cd salao-app
-   ```
-
-3. Abra o arquivo `index.html` em um navegador para visualizar o aplicativo.
-
-## Uso
-
-- Acesse a página de cadastro para registrar novos usuários.
-- Acesse a página de agendamento para marcar horários para os serviços do salão.
-
-## Contribuição
-
-Sinta-se à vontade para contribuir com melhorias e correções. Para isso, faça um fork do repositório e envie suas alterações através de um pull request.
+- A chave pública do Supabase pode ficar no frontend; a service role nunca deve ser exposta.
+- Os arquivos da pasta api ficaram obsoletos após a migração para Supabase Cloud.
+- Se quiser publicar o projeto, qualquer hospedagem estática simples atende.

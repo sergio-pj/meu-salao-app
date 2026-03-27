@@ -9,5 +9,8 @@
     "mongodb": "^6.5.0",
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "vercel": "^41.7.3"
   }
 }

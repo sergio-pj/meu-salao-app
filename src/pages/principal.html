@@ -3,30 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Salão&Beleza</title>
-    <script src="../scripts/auth.js" defer></script>
+    <title>Painel de Gestao | Salao&Beleza</title>
     <link rel="stylesheet" href="../styles/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../scripts/supabase.js" defer></script>
+    <script src="../scripts/auth.js" defer></script>
+    <script src="../scripts/principal.js" defer></script>
 </head>
 <body>
     <header>
-        <h1>Salão&Beleza</h1>
+        <h1>Salao&Beleza</h1>
+        <p id="boas-vindas-salao"></p>
         <nav>
-            <a href="../../index.html">Sair</a>
+            <a href="../../index.html" data-action="logout" onclick="return handleLogout(event)">Sair</a>
         </nav>
     </header>
     <main class="layout">
         <div class="abas-lateral">
-            <button class="aba-btn active" onclick="mostrarAba('agendamento')">✂️ Agendar Horário</button>
-            <button class="aba-btn" onclick="mostrarAba('historico')">📅 Agendamentos</button>
-            <button class="aba-btn" onclick="mostrarAba('financeiro')">💰 Financeiro</button>
+            <button class="aba-btn active" onclick="mostrarAba('agendamento')">✂️ Nova agenda</button>
+            <button class="aba-btn" onclick="mostrarAba('historico')">📅 Atendimentos</button>
+            <button class="aba-btn" onclick="mostrarAba('financeiro')">💰 Recebimentos</button>
         </div>
         <div class="conteudo-abas">
-            <section id="agendamento" class="aba-conteudo">
-                <h2>✂️ Agendar Horário</h2>
+            <section id="agendamento" class="aba-conteudo active">
+                <h2>✂️ Registrar atendimento</h2>
                 <form id="agendamento-form">
                     <div class="linha-campos">
                         <div class="campo">
-                            <label for="cliente-nome">Nome:</label>
+                            <label for="cliente-nome">Cliente:</label>
                             <input type="text" id="cliente-nome" required>
                         </div>
                         <div class="campo">
@@ -39,34 +43,66 @@
                             </select>
                         </div>
                         <div class="campo">
-                            <label for="data">Data:</label>
+                            <label for="data">Data do atendimento:</label>
                             <input type="date" id="data" required>
                         </div>
                         <div class="campo">
-                            <label for="hora">Hora:</label>
+                            <label for="hora">Horario:</label>
                             <input type="time" id="hora" required>
                         </div>
+                        <div class="campo">
+                            <label for="metodo-pagamento">Método de pagamento:</label>
+                            <select id="metodo-pagamento" required>
+                                <option value="pix">Pix</option>
+                                <option value="dinheiro">Dinheiro</option>
+                                <option value="debito">Débito</option>
+                                <option value="credito">Crédito</option>
+                            </select>
+                        </div>
                     </div>
-                    <button type="submit">Agendar</button>
+                    <button type="submit">Salvar atendimento</button>
                 </form>
                 <div id="mensagem-agendamento"></div>
             </section>
             <section id="historico" class="aba-conteudo" style="display:none;">
-                <h2>📅 Histórico de Agendamentos</h2>
+                <h2>📅 Agenda e historico</h2>
                 <div class="filtro-mes">
-                    <label for="mes-historico">Filtrar por mês:</label>
+                    <label for="mes-historico">Filtrar por mes:</label>
                     <select id="mes-historico"></select>
                 </div>
-                <ul id="historico-agendamentos"></ul>
+                <div id="historico-agendamentos"></div>
             </section>
             <section id="financeiro" class="aba-conteudo" style="display:none;">
-                <h2>💰 Financeiro</h2>
-                <!-- Aqui você pode listar os pagamentos registrados, com status -->
-                <ul id="lista-financeiro"></ul>
+                <h2>💰 Controle financeiro</h2>
+                <div class="filtros-financeiro">
+                    <div class="filtro-grupo">
+                        <label for="mes-financeiro">Período:</label>
+                        <select id="mes-financeiro"></select>
+                    </div>
+                    <div class="filtro-grupo">
+                        <label for="status-financeiro">Status:</label>
+                        <select id="status-financeiro">
+                            <option value="todos">Todos</option>
+                            <option value="pago">Pago</option>
+                            <option value="pendente">Pendente</option>
+                        </select>
+                    </div>
+                    <div class="filtro-grupo">
+                        <label for="metodo-financeiro">Método:</label>
+                        <select id="metodo-financeiro">
+                            <option value="todos">Todos</option>
+                            <option value="pix">Pix</option>
+                            <option value="dinheiro">Dinheiro</option>
+                            <option value="debito">Débito</option>
+                            <option value="credito">Crédito</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="resumo-financeiro" class="resumo-financeiro"></div>
+                <div id="lista-financeiro"></div>
             </section>
         </div>
     </main>
     <div id="alerta-edicao" style="display:none;"></div>
-    <script src="../scripts/principal.js"></script>
 </body>
 </html>
