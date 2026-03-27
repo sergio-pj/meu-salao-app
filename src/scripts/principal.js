@@ -6,7 +6,8 @@ const tabelaValores = {
     'trança': 60,
     luzes: 120,
 };
-const metodosPagamento = ['pix', 'dinheiro', 'debito', 'credito'];
+const metodosPagamentoResumo = ['pix', 'dinheiro', 'debito', 'credito'];
+const horariosAgenda = gerarHorariosAgenda('08:00', '23:00');
 
 window.agendamentos = [];
 window.pagamentos = [];
@@ -14,18 +15,25 @@ window.agendamentoEditando = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     const form = document.getElementById('agendamento-form');
+    const selectMetodoPagamento = document.getElementById('metodo-pagamento');
     const selectMes = document.getElementById('mes-historico');
+    const selectModoHistorico = document.getElementById('modo-historico');
+    const inputDiaHistorico = document.getElementById('dia-historico');
     const selectMesFinanceiro = document.getElementById('mes-financeiro');
     const selectStatusFinanceiro = document.getElementById('status-financeiro');
     const selectMetodoFinanceiro = document.getElementById('metodo-financeiro');
 
     form.addEventListener('submit', handleSubmitAgendamento);
+    selectMetodoPagamento.addEventListener('change', toggleCampoObservacaoFiado);
     selectMes.addEventListener('change', atualizarHistorico);
+    selectModoHistorico.addEventListener('change', atualizarHistorico);
+    inputDiaHistorico.addEventListener('change', atualizarHistorico);
     selectMesFinanceiro.addEventListener('change', atualizarFinanceiro);
     selectStatusFinanceiro.addEventListener('change', atualizarFinanceiro);
     selectMetodoFinanceiro.addEventListener('change', atualizarFinanceiro);
     window.addEventListener('resize', handleViewportChange);
     window.mostrarAba('agendamento');
+    toggleCampoObservacaoFiado();
 
     if (!supabaseClient) {
         showMensagem('mensagem-agendamento', 'Supabase não foi inicializado.', 'erro');
@@ -48,11 +56,24 @@ function getMesAno(dateStr) {
     return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2, '0')}`;
 }
 
+function gerarHorariosAgenda(inicio, fim) {
+    const [horaInicial] = inicio.split(':').map(Number);
+    const [horaFinal] = fim.split(':').map(Number);
+    const horarios = [];
+
+    for (let hora = horaInicial; hora <= horaFinal; hora += 1) {
+        horarios.push(`${String(hora).padStart(2, '0')}:00`);
+    }
+
+    return horarios;
+}
+
 function isMobileViewport() {
     return window.matchMedia('(max-width: 640px)').matches;
 }
 
 function handleViewportChange() {
+    atualizarResumoMobile();
     atualizarHistorico();
     atualizarFinanceiro();
 }
@@ -114,7 +135,7 @@ async function carregarDados(salaoId) {
             .order('hora', { ascending: false }),
         supabaseClient
             .from('pagamentos')
-            .select('id, agendamento_id, valor, status, metodo_pagamento, created_at')
+            .select('id, agendamento_id, valor, status, metodo_pagamento, observacao, created_at')
             .eq('salao_id', salaoId)
             .order('created_at', { ascending: false }),
     ]);
@@ -140,12 +161,66 @@ async function carregarDados(salaoId) {
         valor: Number(item.valor),
         status: item.status,
         metodoPagamento: item.metodo_pagamento || 'pix',
+        observacao: item.observacao || '',
     }));
 
     atualizarFiltroMes();
     atualizarFiltroFinanceiro();
+    atualizarResumoMobile();
     atualizarHistorico();
     atualizarFinanceiro();
+}
+
+function atualizarResumoMobile() {
+    const container = document.getElementById('mobile-overview');
+
+    if (!container) {
+        return;
+    }
+
+    if (!isMobileViewport()) {
+        container.hidden = true;
+        container.innerHTML = '';
+        return;
+    }
+
+    const hoje = new Date().toISOString().slice(0, 10);
+    const atendimentosHoje = window.agendamentos.filter((agendamento) => agendamento.data === hoje);
+    const pagamentosPendentes = window.pagamentos.filter((pagamento) => pagamento.status !== 'pago' && pagamento.metodoPagamento !== 'fiado');
+    const fiadosAbertos = window.pagamentos.filter((pagamento) => pagamento.metodoPagamento === 'fiado' && pagamento.status !== 'pago');
+    const valorHoje = atendimentosHoje.reduce((total, agendamento) => total + Number(agendamento.valor || 0), 0);
+    const proximoAtendimento = atendimentosHoje
+        .slice()
+        .sort((a, b) => a.hora.localeCompare(b.hora))
+        .find((agendamento) => agendamento.hora >= new Date().toTimeString().slice(0, 5));
+
+    container.hidden = false;
+    container.innerHTML = `
+        <div class="mobile-overview-hero">
+            <div>
+                <span class="mobile-overview-kicker">Resumo rapido</span>
+                <strong>${formatarDataBR(hoje)}</strong>
+                <p>${proximoAtendimento ? `Proximo atendimento: ${proximoAtendimento.hora} com ${proximoAtendimento.nome}.` : 'Nenhum atendimento futuro cadastrado para hoje.'}</p>
+            </div>
+        </div>
+        <div class="mobile-overview-grid">
+            <article class="mobile-overview-card">
+                <span>Atendimentos hoje</span>
+                <strong>${atendimentosHoje.length}</strong>
+                <small>Previsao de R$ ${formatarValor(valorHoje)}</small>
+            </article>
+            <article class="mobile-overview-card">
+                <span>Recebimentos pendentes</span>
+                <strong>${pagamentosPendentes.length}</strong>
+                <small>Sem contar os fiados</small>
+            </article>
+            <article class="mobile-overview-card mobile-overview-card-warm">
+                <span>Fiados em aberto</span>
+                <strong>${fiadosAbertos.length}</strong>
+                <small>Acompanhe no financeiro</small>
+            </article>
+        </div>
+    `;
 }
 
 async function handleSubmitAgendamento(event) {
@@ -162,10 +237,16 @@ async function handleSubmitAgendamento(event) {
     const data = document.getElementById('data').value;
     const hora = document.getElementById('hora').value;
     const metodoPagamento = document.getElementById('metodo-pagamento').value;
+    const observacaoFiado = document.getElementById('observacao-fiado').value.trim();
     const valor = tabelaValores[servico] || 0;
 
     if (!nome || !servico || !data || !hora || !metodoPagamento) {
         showMensagem('mensagem-agendamento', 'Preencha todos os campos do agendamento.', 'erro');
+        return;
+    }
+
+    if (metodoPagamento === 'fiado' && !observacaoFiado) {
+        showMensagem('mensagem-agendamento', 'Informe a observação do fiado para salvar o atendimento.', 'erro');
         return;
     }
 
@@ -188,7 +269,11 @@ async function handleSubmitAgendamento(event) {
 
             const { error: pagamentoError } = await supabaseClient
                 .from('pagamentos')
-                .update({ valor, metodo_pagamento: metodoPagamento })
+                .update({
+                    valor,
+                    metodo_pagamento: metodoPagamento,
+                    observacao: metodoPagamento === 'fiado' ? observacaoFiado : null,
+                })
                 .eq('agendamento_id', window.agendamentoEditando.id);
 
             if (pagamentoError) {
@@ -221,6 +306,7 @@ async function handleSubmitAgendamento(event) {
                     salao_id: session.user.id,
                     valor,
                     metodo_pagamento: metodoPagamento,
+                    observacao: metodoPagamento === 'fiado' ? observacaoFiado : null,
                     status: 'pendente',
                 });
 
@@ -234,6 +320,7 @@ async function handleSubmitAgendamento(event) {
         window.agendamentoEditando = null;
         mostrarAlertaEdicao(null);
         document.getElementById('agendamento-form').reset();
+        toggleCampoObservacaoFiado();
         await carregarDados(session.user.id);
     } catch (error) {
         console.error('Erro ao salvar agendamento:', error);
@@ -262,6 +349,8 @@ function atualizarFiltroMes() {
     } else if (meses.length) {
         select.value = meses[0];
     }
+
+    sincronizarFiltroDiaHistorico();
 }
 
 function atualizarFiltroFinanceiro() {
@@ -287,14 +376,65 @@ function atualizarFiltroFinanceiro() {
     }
 }
 
+function sincronizarFiltroDiaHistorico() {
+    const inputDia = document.getElementById('dia-historico');
+    const valorAtual = inputDia.value;
+    const diasDisponiveis = [...new Set(window.agendamentos.map((agendamento) => agendamento.data))].sort().reverse();
+
+    if (!diasDisponiveis.length) {
+        inputDia.value = '';
+        return;
+    }
+
+    if (diasDisponiveis.includes(valorAtual)) {
+        inputDia.value = valorAtual;
+        return;
+    }
+
+    inputDia.value = diasDisponiveis[0];
+}
+
+function getConfiguracaoHistorico() {
+    const modo = document.getElementById('modo-historico')?.value || 'mensal';
+    const grupoMes = document.getElementById('grupo-mes-historico');
+    const grupoDia = document.getElementById('grupo-dia-historico');
+
+    if (grupoMes) {
+        grupoMes.hidden = modo !== 'mensal';
+    }
+
+    if (grupoDia) {
+        grupoDia.hidden = modo !== 'diario';
+    }
+
+    return {
+        modo,
+        dia: document.getElementById('dia-historico')?.value || '',
+        mes: document.getElementById('mes-historico')?.value || '',
+    };
+}
+
 function atualizarHistorico() {
     const lista = document.getElementById('historico-agendamentos');
-    const select = document.getElementById('mes-historico');
+    const { modo, dia, mes } = getConfiguracaoHistorico();
     lista.innerHTML = '';
 
     let ags = window.agendamentos;
-    if (select && select.value) {
-        ags = ags.filter((a) => getMesAno(a.data) === select.value);
+
+    if (modo === 'diario') {
+        sincronizarFiltroDiaHistorico();
+        const diaSelecionado = document.getElementById('dia-historico')?.value;
+
+        if (diaSelecionado) {
+            ags = ags.filter((a) => a.data === diaSelecionado);
+        }
+
+        renderizarHistoricoDiario(lista, ags, diaSelecionado);
+        return;
+    }
+
+    if (mes) {
+        ags = ags.filter((a) => getMesAno(a.data) === mes);
     }
 
     if (!ags.length) {
@@ -383,23 +523,173 @@ function atualizarHistorico() {
     });
 }
 
+function renderizarHistoricoDiario(container, agendamentosDia, diaSelecionado) {
+    if (!diaSelecionado) {
+        container.innerHTML = '<p>Selecione um dia para visualizar a rotina.</p>';
+        return;
+    }
+
+    const agendamentosPorHora = new Map();
+    agendamentosDia.forEach((agendamento) => {
+        const horaChave = `${agendamento.hora.slice(0, 2)}:00`;
+        const existentes = agendamentosPorHora.get(horaChave) || [];
+        existentes.push(agendamento);
+        agendamentosPorHora.set(horaChave, existentes);
+    });
+
+    const metade = Math.ceil(horariosAgenda.length / 2);
+    const colunaEsquerda = horariosAgenda.slice(0, metade);
+    const colunaDireita = horariosAgenda.slice(metade);
+    const totalAtendimentos = agendamentosDia.length;
+    const horariosOcupados = new Set(agendamentosDia.map((agendamento) => `${agendamento.hora.slice(0, 2)}:00`));
+    const horariosLivres = horariosAgenda.filter((horario) => !horariosOcupados.has(horario)).length;
+    const previsaoValor = agendamentosDia.reduce((acumulado, agendamento) => acumulado + Number(agendamento.valor || 0), 0);
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'agenda-diaria';
+    wrapper.innerHTML = `
+        <div class="agenda-diaria-topo">
+            <div class="agenda-diaria-titulo">
+                <span class="agenda-diaria-tag">Rotina do dia</span>
+                <h3>${formatarDataBR(diaSelecionado)}</h3>
+                <p>Organize os horarios e acompanhe os encaixes do dia.</p>
+            </div>
+            <div class="agenda-diaria-resumo">
+                <div class="agenda-resumo-card">
+                    <span>Total de atendimentos</span>
+                    <strong>${totalAtendimentos}</strong>
+                </div>
+                <div class="agenda-resumo-card">
+                    <span>Horarios livres</span>
+                    <strong>${horariosLivres}</strong>
+                </div>
+                <div class="agenda-resumo-card agenda-resumo-destaque">
+                    <span>Previsao do dia</span>
+                    <strong>R$ ${formatarValor(previsaoValor)}</strong>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const tableWrapper = document.createElement('div');
+    tableWrapper.className = 'tabela-scroll';
+
+    if (isMobileViewport()) {
+        const listaMobile = document.createElement('div');
+        listaMobile.className = 'rotina-mobile-lista';
+        listaMobile.innerHTML = horariosAgenda.map((horario) => {
+            const agendamentosNoHorario = agendamentosPorHora.get(horario) || [];
+
+            if (!agendamentosNoHorario.length) {
+                return `
+                    <article class="rotina-mobile-item rotina-mobile-item-livre">
+                        <div class="rotina-mobile-hora">${horario}</div>
+                        <div class="rotina-mobile-conteudo">
+                            <span class="rotina-mobile-status">Horario livre</span>
+                            <p>Espaco disponivel para encaixe ou descanso.</p>
+                        </div>
+                    </article>
+                `;
+            }
+
+            return `
+                <article class="rotina-mobile-item rotina-mobile-item-ocupado">
+                    <div class="rotina-mobile-hora">${horario}</div>
+                    <div class="rotina-mobile-conteudo">
+                        <span class="rotina-mobile-status">${agendamentosNoHorario.length} atendimento(s)</span>
+                        <div class="rotina-mobile-blocos">
+                            ${agendamentosNoHorario.map((agendamento) => `
+                                <div class="rotina-mobile-bloco">
+                                    <strong>${agendamento.nome}</strong>
+                                    <span>${agendamento.hora} • ${agendamento.servico}</span>
+                                    <small>R$ ${formatarValor(agendamento.valor)}</small>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </article>
+            `;
+        }).join('');
+
+        wrapper.appendChild(listaMobile);
+        container.appendChild(wrapper);
+        return;
+    }
+
+    const tabela = document.createElement('table');
+    tabela.className = 'tabela-rotina';
+    tabela.innerHTML = `
+        <thead>
+            <tr>
+                <th>Horario</th>
+                <th>Agenda</th>
+                <th>Horario</th>
+                <th>Agenda</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${colunaEsquerda.map((horaEsquerda, index) => {
+                const horaDireita = colunaDireita[index];
+                return `
+                    <tr>
+                        ${montarCelulasRotina(horaEsquerda, agendamentosPorHora.get(horaEsquerda) || [])}
+                        ${horaDireita ? montarCelulasRotina(horaDireita, agendamentosPorHora.get(horaDireita) || []) : '<td></td><td></td>'}
+                    </tr>
+                `;
+            }).join('')}
+        </tbody>
+    `;
+
+    tableWrapper.appendChild(tabela);
+    wrapper.appendChild(tableWrapper);
+    container.appendChild(wrapper);
+}
+
+function montarCelulasRotina(horario, agendamentosNoHorario) {
+    if (!agendamentosNoHorario.length) {
+        return `
+            <td class="horario-rotina">${horario}</td>
+            <td class="slot-livre">Horario livre</td>
+        `;
+    }
+
+    return `
+        <td class="horario-rotina">${horario}</td>
+        <td>
+            <div class="slot-ocupado-lista">
+                ${agendamentosNoHorario.map((agendamento) => `
+                    <div class="slot-ocupado-item">
+                        <strong>${agendamento.nome}</strong>
+                        <span>${agendamento.hora} • ${agendamento.servico}</span>
+                    </div>
+                `).join('')}
+            </div>
+        </td>
+    `;
+}
+
 function atualizarFinanceiro() {
     const resumo = document.getElementById('resumo-financeiro');
     const lista = document.getElementById('lista-financeiro');
+    const listaFiados = document.getElementById('lista-fiados');
     const filtroMes = document.getElementById('mes-financeiro')?.value || 'todos';
     const filtroStatus = document.getElementById('status-financeiro')?.value || 'todos';
     const filtroMetodo = document.getElementById('metodo-financeiro')?.value || 'todos';
     resumo.innerHTML = '';
     lista.innerHTML = '';
+    listaFiados.innerHTML = '';
 
     if (!window.pagamentos.length) {
         resumo.innerHTML = '<p class="financeiro-vazio">Nenhum resumo disponível até o momento.</p>';
         lista.innerHTML = '<p>Nenhum pagamento registrado até o momento.</p>';
+        listaFiados.innerHTML = '<p class="financeiro-vazio">Nenhum fiado registrado até o momento.</p>';
         return;
     }
 
     const agendamentoPorId = new Map(window.agendamentos.map((agendamento) => [agendamento.id, agendamento]));
-    const pagamentosFiltrados = window.pagamentos.filter((pagamento) => {
+    const pagamentosNormais = window.pagamentos.filter((pagamento) => pagamento.metodoPagamento !== 'fiado');
+    const pagamentosFiados = window.pagamentos.filter((pagamento) => pagamento.metodoPagamento === 'fiado');
+    const pagamentosFiltrados = pagamentosNormais.filter((pagamento) => {
         const agendamento = agendamentoPorId.get(pagamento.agendamentoId);
 
         if (!agendamento) {
@@ -412,6 +702,18 @@ function atualizarFinanceiro() {
 
         return correspondeMes && correspondeStatus && correspondeMetodo;
     });
+
+    const fiadosFiltrados = pagamentosFiados.filter((pagamento) => {
+        const agendamento = agendamentoPorId.get(pagamento.agendamentoId);
+
+        if (!agendamento) {
+            return false;
+        }
+
+        return filtroMes === 'todos' || getMesAno(agendamento.data) === filtroMes;
+    });
+
+    renderizarFiados(listaFiados, fiadosFiltrados, agendamentoPorId);
 
     if (!pagamentosFiltrados.length) {
         resumo.innerHTML = '<p class="financeiro-vazio">Nenhum resultado encontrado para os filtros selecionados.</p>';
@@ -532,7 +834,7 @@ function showMensagem(elementId, texto, tipo) {
 }
 
 function atualizarResumoFinanceiro(container, pagamentosReferencia = window.pagamentos) {
-    const resumoPorMetodo = metodosPagamento.map((metodo) => {
+    const resumoPorMetodo = metodosPagamentoResumo.map((metodo) => {
         const pagamentosMetodo = pagamentosReferencia.filter((pagamento) => pagamento.metodoPagamento === metodo);
         const total = pagamentosMetodo.reduce((acumulado, pagamento) => acumulado + pagamento.valor, 0);
         const pagos = pagamentosMetodo
@@ -577,12 +879,104 @@ function atualizarResumoFinanceiro(container, pagamentosReferencia = window.paga
     `;
 }
 
+function renderizarFiados(container, pagamentosFiados, agendamentoPorId) {
+    if (!pagamentosFiados.length) {
+        container.innerHTML = '<p class="financeiro-vazio">Nenhum fiado registrado para o período selecionado.</p>';
+        return;
+    }
+
+    const fiadosOrdenados = pagamentosFiados.slice().sort((a, b) => {
+        const dataA = agendamentoPorId.get(a.agendamentoId)?.data || '';
+        const dataB = agendamentoPorId.get(b.agendamentoId)?.data || '';
+        return dataA.localeCompare(dataB);
+    });
+
+    if (isMobileViewport()) {
+        const cards = document.createElement('div');
+        cards.className = 'lista-cards lista-cards-fiados';
+        cards.innerHTML = fiadosOrdenados.map((pagamento) => {
+            const agendamento = agendamentoPorId.get(pagamento.agendamentoId);
+
+            if (!agendamento) {
+                return '';
+            }
+
+            return `
+                <article class="registro-card registro-card-fiado">
+                    <div class="registro-card-topo">
+                        <strong>${agendamento.nome}</strong>
+                        <span class="registro-badge registro-badge-fiado">Fiado</span>
+                    </div>
+                    <div class="registro-linha"><span>Data</span><strong>${formatarDataBR(agendamento.data)}</strong></div>
+                    <div class="registro-linha"><span>Serviço</span><strong>${agendamento.servico}</strong></div>
+                    <div class="registro-linha"><span>Valor</span><strong>R$ ${formatarValor(pagamento.valor)}</strong></div>
+                    <div class="registro-linha"><span>Status</span><strong>${pagamento.status}</strong></div>
+                    <div class="observacao-fiado-card">
+                        <span>Observação</span>
+                        <p>${pagamento.observacao || 'Sem observações registradas.'}</p>
+                    </div>
+                    <label class="check-pago-card">
+                        <input type="checkbox" class="check-pago" ${pagamento.status === "pago" ? "checked" : ""} onchange="togglePago('${pagamento.id}')">
+                        <span>Marcar como pago</span>
+                    </label>
+                </article>
+            `;
+        }).join('');
+        container.appendChild(cards);
+        return;
+    }
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'tabela-scroll';
+    const tabela = document.createElement('table');
+    tabela.className = 'tabela-financeiro tabela-fiados';
+    tabela.innerHTML = `
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Cliente</th>
+                <th>Serviço</th>
+                <th>Valor</th>
+                <th>Status</th>
+                <th>Observação</th>
+                <th>Ação</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${fiadosOrdenados.map((pagamento) => {
+                const agendamento = agendamentoPorId.get(pagamento.agendamentoId);
+
+                if (!agendamento) {
+                    return '';
+                }
+
+                return `
+                    <tr>
+                        <td>${formatarDataBR(agendamento.data)}</td>
+                        <td>${agendamento.nome}</td>
+                        <td>${agendamento.servico}</td>
+                        <td>R$ ${formatarValor(pagamento.valor)}</td>
+                        <td><strong>${pagamento.status}</strong></td>
+                        <td>${pagamento.observacao || 'Sem observações'}</td>
+                        <td>
+                            <input type="checkbox" class="check-pago" ${pagamento.status === "pago" ? "checked" : ""} onchange="togglePago('${pagamento.id}')">
+                        </td>
+                    </tr>
+                `;
+            }).join('')}
+        </tbody>
+    `;
+    wrapper.appendChild(tabela);
+    container.appendChild(wrapper);
+}
+
 function formatarMetodoPagamento(valor) {
     const mapa = {
         pix: 'Pix',
         dinheiro: 'Dinheiro',
         debito: 'Débito',
         credito: 'Crédito',
+        fiado: 'Fiado',
     };
 
     return mapa[valor] || valor;
@@ -593,24 +987,27 @@ function formatarValor(valor) {
 }
 
 function buildLoadErrorMessage(error) {
-    if (isMetodoPagamentoColumnMissing(error)) {
-        return 'Falta atualizar a tabela pagamentos no Supabase com a coluna metodo_pagamento.';
+    if (isPagamentoSchemaOutdated(error)) {
+        return 'Falta atualizar a tabela pagamentos no Supabase para suportar fiado e observações.';
     }
 
     return 'Não foi possível carregar os dados do salão.';
 }
 
 function enrichSchemaError(error) {
-    if (isMetodoPagamentoColumnMissing(error)) {
-        return new Error('Atualize a tabela pagamentos no Supabase com a coluna metodo_pagamento antes de continuar.');
+    if (isPagamentoSchemaOutdated(error)) {
+        return new Error('Atualize a tabela pagamentos no Supabase para suportar fiado e observações antes de continuar.');
     }
 
     return error;
 }
 
-function isMetodoPagamentoColumnMissing(error) {
+function isPagamentoSchemaOutdated(error) {
     const message = `${error?.message || ''} ${error?.details || ''} ${error?.hint || ''}`.toLowerCase();
-    return message.includes('metodo_pagamento') && (message.includes('column') || message.includes('schema cache'));
+    return (
+        (message.includes('metodo_pagamento') && (message.includes('column') || message.includes('schema cache') || message.includes('check constraint'))) ||
+        (message.includes('observacao') && (message.includes('column') || message.includes('schema cache')))
+    );
 }
 
 window.excluirAgendamento = async function(id) {
@@ -646,6 +1043,8 @@ window.editarAgendamento = function(id) {
     document.getElementById('data').value = ag.data;
     document.getElementById('hora').value = ag.hora;
     document.getElementById('metodo-pagamento').value = pagamento?.metodoPagamento || 'pix';
+    document.getElementById('observacao-fiado').value = pagamento?.observacao || '';
+    toggleCampoObservacaoFiado();
     window.agendamentoEditando = { id: ag.id };
     mostrarAlertaEdicao(ag);
 };
@@ -666,7 +1065,26 @@ window.cancelarEdicao = function() {
     window.agendamentoEditando = null;
     mostrarAlertaEdicao(null);
     document.getElementById('agendamento-form').reset();
+    toggleCampoObservacaoFiado();
 };
+
+function toggleCampoObservacaoFiado() {
+    const metodoPagamento = document.getElementById('metodo-pagamento');
+    const campoObservacao = document.getElementById('campo-observacao-fiado');
+    const inputObservacao = document.getElementById('observacao-fiado');
+
+    if (!metodoPagamento || !campoObservacao || !inputObservacao) {
+        return;
+    }
+
+    const isFiado = metodoPagamento.value === 'fiado';
+    campoObservacao.hidden = !isFiado;
+    campoObservacao.style.display = isFiado ? 'flex' : 'none';
+
+    if (!isFiado) {
+        inputObservacao.value = '';
+    }
+}
 
 window.togglePago = async function(id) {
     const session = await getSessionOrRedirect();

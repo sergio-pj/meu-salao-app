@@ -10,7 +10,7 @@
     <script src="../scripts/auth.js" defer></script>
     <script src="../scripts/principal.js" defer></script>
 </head>
-<body>
+<body class="dashboard-page">
     <header>
         <h1>Salao&Beleza</h1>
         <p id="boas-vindas-salao"></p>
@@ -26,6 +26,7 @@
         </div>
         <div class="conteudo-abas">
             <section id="agendamento" class="aba-conteudo active">
+                <div id="mobile-overview" class="mobile-overview" hidden></div>
                 <h2>✂️ Registrar atendimento</h2>
                 <form id="agendamento-form">
                     <div class="linha-campos">
@@ -57,8 +58,13 @@
                                 <option value="dinheiro">Dinheiro</option>
                                 <option value="debito">Débito</option>
                                 <option value="credito">Crédito</option>
+                                <option value="fiado">Fiado</option>
                             </select>
                         </div>
+                    </div>
+                    <div class="campo campo-observacao-fiado" id="campo-observacao-fiado" hidden>
+                        <label for="observacao-fiado">Observação do fiado:</label>
+                        <textarea id="observacao-fiado" rows="3" placeholder="Ex.: paga dia 10, em 2 vezes, via Pix."></textarea>
                     </div>
                     <button type="submit">Salvar atendimento</button>
                 </form>
@@ -66,9 +72,22 @@
             </section>
             <section id="historico" class="aba-conteudo" style="display:none;">
                 <h2>📅 Agenda e historico</h2>
-                <div class="filtro-mes">
-                    <label for="mes-historico">Filtrar por mes:</label>
-                    <select id="mes-historico"></select>
+                <div class="filtros-historico">
+                    <div class="filtro-grupo">
+                        <label for="modo-historico">Visualização:</label>
+                        <select id="modo-historico">
+                            <option value="mensal">Mensal</option>
+                            <option value="diario">Diária</option>
+                        </select>
+                    </div>
+                    <div class="filtro-grupo" id="grupo-mes-historico">
+                        <label for="mes-historico">Mês:</label>
+                        <select id="mes-historico"></select>
+                    </div>
+                    <div class="filtro-grupo" id="grupo-dia-historico" hidden>
+                        <label for="dia-historico">Dia:</label>
+                        <input type="date" id="dia-historico">
+                    </div>
                 </div>
                 <div id="historico-agendamentos"></div>
             </section>
@@ -100,6 +119,13 @@
                 </div>
                 <div id="resumo-financeiro" class="resumo-financeiro"></div>
                 <div id="lista-financeiro"></div>
+                <div class="bloco-fiados">
+                    <div class="cabecalho-fiados">
+                        <h3>Fiados</h3>
+                        <p>Acompanhe os combinados de pagamento sem misturar com o painel principal.</p>
+                    </div>
+                    <div id="lista-fiados"></div>
+                </div>
             </section>
         </div>
     </main>
