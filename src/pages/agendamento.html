@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendamento online | Salao&Beleza</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../scripts/supabase.js" defer></script>
+    <script src="../scripts/agendamento.js" defer></script>
+</head>
+<body class="booking-page">
+    <header>
+        <h1>Salao&Beleza</h1>
+        <h2>Agendamento online para clientes</h2>
+    </header>
+
+    <main class="container booking-shell">
+        <section class="booking-panel booking-intro-panel">
+            <span class="auth-kicker">Agenda externa</span>
+            <h2>Escolha o serviço e reserve seu horário</h2>
+            <p class="booking-lead">Consulte a disponibilidade real antes de confirmar. Quando o horário estiver livre, o atendimento será enviado para o painel do salão e você já poderá confirmar pelo WhatsApp.</p>
+
+            <div class="booking-highlights">
+                <span>Consulta de horários ocupados</span>
+                <span>Envio direto para o painel</span>
+                <span>Confirmação rápida no WhatsApp</span>
+            </div>
+
+            <div class="booking-meta-card">
+                <small>Salão vinculado</small>
+                <strong id="booking-salon-name">Aguardando configuração</strong>
+                <p id="booking-config-hint">Abra esta página com ?salao=ID_DO_SALAO ou ?email=email@dosalao.com e, se quiser, também com ?whatsapp=5511999999999.</p>
+            </div>
+        </section>
+
+        <section class="booking-panel">
+            <h2>Marcar atendimento</h2>
+            <form id="booking-form">
+                <div class="linha-campos booking-fields-grid">
+                    <div class="campo">
+                        <label for="booking-name">Seu nome:</label>
+                        <input type="text" id="booking-name" required>
+                    </div>
+                    <div class="campo">
+                        <label for="booking-phone">Telefone com WhatsApp:</label>
+                        <input type="tel" id="booking-phone" placeholder="(11) 99999-9999" required>
+                    </div>
+                    <div class="campo">
+                        <label for="booking-service">Serviço:</label>
+                        <select id="booking-service" required></select>
+                    </div>
+                    <div class="campo">
+                        <label for="booking-date">Data desejada:</label>
+                        <input type="date" id="booking-date" required>
+                    </div>
+                    <div class="campo">
+                        <label for="booking-time">Horário disponível:</label>
+                        <select id="booking-time" required>
+                            <option value="">Selecione uma data primeiro</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="booking-availability" id="booking-availability">
+                    Escolha uma data para carregar os horários disponíveis.
+                </div>
+
+                <button type="submit" id="booking-submit">Confirmar agendamento</button>
+            </form>
+
+            <div id="booking-status" class="booking-status-message" aria-live="polite"></div>
+            <div id="booking-success" class="booking-success" hidden></div>
+        </section>
+    </main>
+</body>
+</html>

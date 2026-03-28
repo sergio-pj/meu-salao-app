@@ -50,3 +50,17 @@ O projeto foi ajustado para usar Supabase Cloud diretamente no frontend. Com iss
 - A chave pública do Supabase pode ficar no frontend; a service role nunca deve ser exposta.
 - Os arquivos da pasta api ficaram obsoletos após a migração para Supabase Cloud.
 - Se quiser publicar o projeto, qualquer hospedagem estática simples atende.
+
+## Agendamento externo para clientes
+
+- A página pública fica em src/pages/agendamento.html.
+- Forma recomendada de uso: abrir com ?salao=UUID_DO_SALAO&nome=Nome%20do%20Salao&whatsapp=5511999999999.
+- Alternativa: usar ?email=email@dosalao.com, desde que a leitura da tabela saloes esteja liberada pela política RLS.
+- Exemplo completo:
+
+```text
+src/pages/agendamento.html?salao=UUID_DO_SALAO&nome=Studio%20Beleza&whatsapp=5511999999999
+```
+
+- O formulário consulta a tabela agendamentos para desabilitar horários ocupados e faz uma nova validação antes de inserir.
+- Para um agendamento público funcionar com o anon key, a política RLS do Supabase precisa permitir leitura dos horários e inserção controlada na tabela agendamentos.

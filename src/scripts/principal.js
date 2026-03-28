@@ -6,12 +6,14 @@ const tabelaValores = {
     'trança': 60,
     luzes: 120,
 };
+const nomesMeses = ['janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 const metodosPagamentoResumo = ['pix', 'dinheiro', 'debito', 'credito'];
 const horariosAgenda = gerarHorariosAgenda('08:00', '23:00');
 
 window.agendamentos = [];
 window.pagamentos = [];
 window.agendamentoEditando = null;
+window.historicoMobileDiaAberto = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     const form = document.getElementById('agendamento-form');
@@ -19,6 +21,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const selectMes = document.getElementById('mes-historico');
     const selectModoHistorico = document.getElementById('modo-historico');
     const inputDiaHistorico = document.getElementById('dia-historico');
+    const btnDiaAnterior = document.getElementById('historico-dia-anterior');
+    const btnDiaProximo = document.getElementById('historico-dia-proximo');
+    const btnHoje = document.getElementById('historico-hoje');
+    const btnFecharSheetHistorico = document.getElementById('historico-dia-sheet-fechar');
     const selectMesFinanceiro = document.getElementById('mes-financeiro');
     const selectStatusFinanceiro = document.getElementById('status-financeiro');
     const selectMetodoFinanceiro = document.getElementById('metodo-financeiro');
@@ -28,10 +34,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     selectMes.addEventListener('change', atualizarHistorico);
     selectModoHistorico.addEventListener('change', atualizarHistorico);
     inputDiaHistorico.addEventListener('change', atualizarHistorico);
+    btnDiaAnterior.addEventListener('click', () => navegarDiaHistorico(-1));
+    btnDiaProximo.addEventListener('click', () => navegarDiaHistorico(1));
+    btnHoje.addEventListener('click', () => definirDiaHistorico(getHojeISO()));
+    if (btnFecharSheetHistorico) {
+        btnFecharSheetHistorico.addEventListener('click', fecharSheetHistoricoDia);
+    }
     selectMesFinanceiro.addEventListener('change', atualizarFinanceiro);
     selectStatusFinanceiro.addEventListener('change', atualizarFinanceiro);
     selectMetodoFinanceiro.addEventListener('change', atualizarFinanceiro);
     window.addEventListener('resize', handleViewportChange);
+    fecharSheetHistoricoDia();
     window.mostrarAba('agendamento');
     toggleCampoObservacaoFiado();
 
@@ -56,6 +69,58 @@ function getMesAno(dateStr) {
     return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2, '0')}`;
 }
 
+function getHojeISO() {
+    return formatarDataParaISO(new Date());
+}
+
+function criarDataLocal(dataISO) {
+    return new Date(`${dataISO}T00:00:00`);
+}
+
+function formatarDataParaISO(data) {
+    const ano = data.getFullYear();
+    const mes = String(data.getMonth() + 1).padStart(2, '0');
+    const dia = String(data.getDate()).padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
+}
+
+function adicionarDiasDataISO(dataISO, quantidadeDias) {
+    const data = criarDataLocal(dataISO);
+    data.setDate(data.getDate() + quantidadeDias);
+    return formatarDataParaISO(data);
+}
+
+function adicionarMesDataISO(dataISO, quantidadeMeses) {
+    const data = criarDataLocal(dataISO);
+    const diaAtual = data.getDate();
+    data.setDate(1);
+    data.setMonth(data.getMonth() + quantidadeMeses);
+    const ultimoDia = new Date(data.getFullYear(), data.getMonth() + 1, 0).getDate();
+    data.setDate(Math.min(diaAtual, ultimoDia));
+    return formatarDataParaISO(data);
+}
+
+function definirDiaHistorico(dataISO, options = {}) {
+    const inputDia = document.getElementById('dia-historico');
+    const shouldUpdate = options.atualizar !== false;
+
+    if (!inputDia) {
+        return;
+    }
+
+    inputDia.value = dataISO;
+
+    if (shouldUpdate) {
+        atualizarHistorico();
+    }
+}
+
+function navegarDiaHistorico(direcao) {
+    const inputDia = document.getElementById('dia-historico');
+    const diaBase = inputDia?.value || getHojeISO();
+    definirDiaHistorico(adicionarDiasDataISO(diaBase, direcao));
+}
+
 function gerarHorariosAgenda(inicio, fim) {
     const [horaInicial] = inicio.split(':').map(Number);
     const [horaFinal] = fim.split(':').map(Number);
@@ -73,6 +138,10 @@ function isMobileViewport() {
 }
 
 function handleViewportChange() {
+    if (!isMobileViewport()) {
+        fecharSheetHistoricoDia();
+    }
+
     atualizarResumoMobile();
     atualizarHistorico();
     atualizarFinanceiro();
@@ -330,7 +399,7 @@ async function handleSubmitAgendamento(event) {
 
 function atualizarFiltroMes() {
     const select = document.getElementById('mes-historico');
-    const meses = [...new Set(window.agendamentos.map((a) => getMesAno(a.data)))].sort().reverse();
+    const meses = [...new Set([...window.agendamentos.map((a) => getMesAno(a.data)), getMesAno(getHojeISO())])].sort().reverse();
     const valorAtual = select.value;
 
     select.innerHTML = '';
@@ -378,37 +447,42 @@ function atualizarFiltroFinanceiro() {
 
 function sincronizarFiltroDiaHistorico() {
     const inputDia = document.getElementById('dia-historico');
-    const valorAtual = inputDia.value;
-    const diasDisponiveis = [...new Set(window.agendamentos.map((agendamento) => agendamento.data))].sort().reverse();
-
-    if (!diasDisponiveis.length) {
-        inputDia.value = '';
+    if (!inputDia) {
         return;
     }
 
-    if (diasDisponiveis.includes(valorAtual)) {
-        inputDia.value = valorAtual;
-        return;
+    if (!inputDia.value) {
+        inputDia.value = getHojeISO();
     }
-
-    inputDia.value = diasDisponiveis[0];
 }
 
 function getConfiguracaoHistorico() {
     const modo = document.getElementById('modo-historico')?.value || 'mensal';
     const grupoMes = document.getElementById('grupo-mes-historico');
     const grupoDia = document.getElementById('grupo-dia-historico');
+    const grupoNavegacao = document.getElementById('grupo-navegacao-dia-historico');
+    const calendario = document.getElementById('historico-calendario');
+    const mobile = isMobileViewport();
 
     if (grupoMes) {
         grupoMes.hidden = modo !== 'mensal';
     }
 
     if (grupoDia) {
-        grupoDia.hidden = modo !== 'diario';
+        grupoDia.hidden = modo !== 'diario' || mobile;
+    }
+
+    if (grupoNavegacao) {
+        grupoNavegacao.hidden = modo !== 'diario' || mobile;
+    }
+
+    if (calendario) {
+        calendario.hidden = modo !== 'diario' || !mobile;
     }
 
     return {
         modo,
+        mobile,
         dia: document.getElementById('dia-historico')?.value || '',
         mes: document.getElementById('mes-historico')?.value || '',
     };
@@ -416,7 +490,8 @@ function getConfiguracaoHistorico() {
 
 function atualizarHistorico() {
     const lista = document.getElementById('historico-agendamentos');
-    const { modo, dia, mes } = getConfiguracaoHistorico();
+    const calendario = document.getElementById('historico-calendario');
+    const { modo, mobile, mes } = getConfiguracaoHistorico();
     lista.innerHTML = '';
 
     let ags = window.agendamentos;
@@ -429,8 +504,30 @@ function atualizarHistorico() {
             ags = ags.filter((a) => a.data === diaSelecionado);
         }
 
-        renderizarHistoricoDiario(lista, ags, diaSelecionado);
+        if (mobile) {
+            renderizarCalendarioHistorico(calendario, diaSelecionado);
+            renderizarHistoricoMobilePlaceholder(lista);
+
+            if (window.historicoMobileDiaAberto) {
+                abrirSheetHistoricoDia(window.historicoMobileDiaAberto);
+            } else {
+                fecharSheetHistoricoDia({ preservarDia: true });
+            }
+        } else {
+            if (calendario) {
+                calendario.innerHTML = '';
+                calendario.hidden = true;
+            }
+
+            renderizarHistoricoDiario(lista, ags, diaSelecionado);
+        }
+
         return;
+    }
+
+    if (calendario) {
+        calendario.innerHTML = '';
+        calendario.hidden = true;
     }
 
     if (mes) {
@@ -523,12 +620,117 @@ function atualizarHistorico() {
     });
 }
 
-function renderizarHistoricoDiario(container, agendamentosDia, diaSelecionado) {
-    if (!diaSelecionado) {
-        container.innerHTML = '<p>Selecione um dia para visualizar a rotina.</p>';
+function renderizarCalendarioHistorico(container, diaSelecionado) {
+    if (!container || !diaSelecionado) {
         return;
     }
 
+    const mobile = isMobileViewport();
+
+    const dataBase = criarDataLocal(diaSelecionado);
+    const primeiroDiaMes = new Date(dataBase.getFullYear(), dataBase.getMonth(), 1);
+    const ultimoDiaMes = new Date(dataBase.getFullYear(), dataBase.getMonth() + 1, 0);
+    const inicioGrade = new Date(primeiroDiaMes);
+    inicioGrade.setDate(primeiroDiaMes.getDate() - primeiroDiaMes.getDay());
+    const hoje = getHojeISO();
+
+    const dias = [];
+    for (let indice = 0; indice < 42; indice += 1) {
+        const dataCorrente = new Date(inicioGrade);
+        dataCorrente.setDate(inicioGrade.getDate() + indice);
+        const dataISO = formatarDataParaISO(dataCorrente);
+        const agendamentosDia = window.agendamentos.filter((agendamento) => agendamento.data === dataISO);
+        dias.push({
+            dataISO,
+            dia: dataCorrente.getDate(),
+            foraDoMes: dataCorrente.getMonth() !== dataBase.getMonth(),
+            total: agendamentosDia.length,
+            livres: Math.max(horariosAgenda.length - new Set(agendamentosDia.map((agendamento) => `${agendamento.hora.slice(0, 2)}:00`)).size, 0),
+        });
+    }
+
+    container.hidden = false;
+    container.innerHTML = `
+        <section class="historico-calendario-card">
+            <div class="historico-calendario-topo">
+                <div>
+                    <span class="agenda-diaria-tag">Seleção rápida</span>
+                    <h3>${nomesMeses[dataBase.getMonth()].charAt(0).toUpperCase() + nomesMeses[dataBase.getMonth()].slice(1)} / ${dataBase.getFullYear()}</h3>
+                    <p>Toque em um dia para abrir a rotina completa com horários livres e ocupados.</p>
+                </div>
+                <div class="historico-calendario-acoes">
+                    <button type="button" class="btn-secundario" data-calendario-nav="-1">Mês anterior</button>
+                    <button type="button" class="btn-secundario" data-calendario-nav="1">Próximo mês</button>
+                </div>
+            </div>
+            <div class="historico-calendario-grade-cabecalho">
+                <span>Dom</span>
+                <span>Seg</span>
+                <span>Ter</span>
+                <span>Qua</span>
+                <span>Qui</span>
+                <span>Sex</span>
+                <span>Sáb</span>
+            </div>
+            <div class="historico-calendario-grade">
+                ${dias.map((item) => `
+                    <button
+                        type="button"
+                        class="historico-dia-card${mobile ? ' historico-dia-card-mobile' : ''}${item.foraDoMes ? ' historico-dia-card-fora' : ''}${item.dataISO === diaSelecionado ? ' historico-dia-card-ativo' : ''}${item.dataISO === hoje ? ' historico-dia-card-hoje' : ''}${item.total ? ' historico-dia-card-ocupado' : ' historico-dia-card-livre'}"
+                        data-dia="${item.dataISO}"
+                    >
+                        <span class="historico-dia-numero">${item.dia}</span>
+                        ${mobile
+                            ? `${item.total ? `<span class="historico-dia-badge">${item.total}</span>` : '<span class="historico-dia-ponto"></span>'}`
+                            : `<strong>${item.total ? `${item.total} atendimento(s)` : 'Livre'}</strong><small>${item.total ? `${item.livres} horário(s) vagos` : 'Agenda vazia'}</small>`}
+                    </button>
+                `).join('')}
+            </div>
+        </section>
+    `;
+
+    container.querySelectorAll('[data-dia]').forEach((botao) => {
+        botao.addEventListener('click', () => {
+            const dataSelecionada = botao.dataset.dia || diaSelecionado;
+            definirDiaHistorico(dataSelecionada, { atualizar: false });
+            window.historicoMobileDiaAberto = dataSelecionada;
+
+            if (mobile) {
+                renderizarCalendarioHistorico(container, dataSelecionada);
+                abrirSheetHistoricoDia(dataSelecionada);
+                return;
+            }
+
+            atualizarHistorico();
+        });
+    });
+
+    container.querySelectorAll('[data-calendario-nav]').forEach((botao) => {
+        botao.addEventListener('click', () => {
+            const direcao = Number(botao.dataset.calendarioNav || 0);
+            if (mobile) {
+                window.historicoMobileDiaAberto = null;
+                fecharSheetHistoricoDia({ preservarDia: true });
+            }
+
+            definirDiaHistorico(adicionarMesDataISO(diaSelecionado, direcao));
+        });
+    });
+}
+
+function renderizarHistoricoMobilePlaceholder(container) {
+    container.innerHTML = `
+        <section class="historico-mobile-placeholder">
+            <div>
+                <span class="agenda-diaria-tag">Agenda móvel</span>
+                <h3>Escolha um dia</h3>
+                <p>O calendário mostra apenas os dias. Toque em qualquer data para abrir a aba com os compromissos.</p>
+            </div>
+        </section>
+    `;
+}
+
+function construirAgendaDiaria(diaSelecionado, agendamentosDia) {
     const agendamentosPorHora = new Map();
     agendamentosDia.forEach((agendamento) => {
         const horaChave = `${agendamento.hora.slice(0, 2)}:00`;
@@ -571,9 +773,6 @@ function renderizarHistoricoDiario(container, agendamentosDia, diaSelecionado) {
         </div>
     `;
 
-    const tableWrapper = document.createElement('div');
-    tableWrapper.className = 'tabela-scroll';
-
     if (isMobileViewport()) {
         const listaMobile = document.createElement('div');
         listaMobile.className = 'rotina-mobile-lista';
@@ -612,10 +811,11 @@ function renderizarHistoricoDiario(container, agendamentosDia, diaSelecionado) {
         }).join('');
 
         wrapper.appendChild(listaMobile);
-        container.appendChild(wrapper);
-        return;
+        return wrapper;
     }
 
+    const tableWrapper = document.createElement('div');
+    tableWrapper.className = 'tabela-scroll';
     const tabela = document.createElement('table');
     tabela.className = 'tabela-rotina';
     tabela.innerHTML = `
@@ -642,7 +842,89 @@ function renderizarHistoricoDiario(container, agendamentosDia, diaSelecionado) {
 
     tableWrapper.appendChild(tabela);
     wrapper.appendChild(tableWrapper);
-    container.appendChild(wrapper);
+    return wrapper;
+}
+
+function renderizarHistoricoDiario(container, agendamentosDia, diaSelecionado) {
+    if (!diaSelecionado) {
+        container.innerHTML = '<p>Selecione um dia para visualizar a rotina.</p>';
+        return;
+    }
+
+    container.appendChild(construirAgendaDiaria(diaSelecionado, agendamentosDia));
+}
+
+function abrirSheetHistoricoDia(diaSelecionado) {
+    const sheet = document.getElementById('historico-dia-sheet');
+    const conteudo = document.getElementById('historico-dia-sheet-conteudo');
+    const titulo = document.getElementById('historico-dia-sheet-titulo');
+
+    if (!sheet || !conteudo || !titulo) {
+        return;
+    }
+
+    const agendamentosDia = window.agendamentos
+        .filter((agendamento) => agendamento.data === diaSelecionado)
+        .sort((a, b) => a.hora.localeCompare(b.hora));
+    const horariosOcupados = new Set(agendamentosDia.map((agendamento) => `${agendamento.hora.slice(0, 2)}:00`));
+    const horariosLivres = horariosAgenda.filter((horario) => !horariosOcupados.has(horario)).length;
+
+    titulo.textContent = formatarDataBR(diaSelecionado);
+    conteudo.innerHTML = `
+        <div class="historico-dia-sheet-resumo">
+            <article class="agenda-resumo-card">
+                <span>Atendimentos</span>
+                <strong>${agendamentosDia.length}</strong>
+            </article>
+            <article class="agenda-resumo-card">
+                <span>Horários vagos</span>
+                <strong>${horariosLivres}</strong>
+            </article>
+        </div>
+        <div class="historico-dia-sheet-corpo">
+            ${agendamentosDia.length
+                ? `
+                    <div class="historico-dia-sheet-lista">
+                        ${agendamentosDia.map((agendamento) => `
+                            <article class="historico-dia-sheet-item">
+                                <strong>${agendamento.hora}</strong>
+                                <div>
+                                    <span>${agendamento.nome}</span>
+                                    <small>${agendamento.servico}</small>
+                                </div>
+                            </article>
+                        `).join('')}
+                    </div>
+                `
+                : `
+                    <div class="historico-dia-sheet-vazio">
+                        <strong>Dia livre</strong>
+                        <p>Não há compromissos marcados para esta data.</p>
+                    </div>
+                `}
+        </div>
+    `;
+
+    sheet.hidden = false;
+}
+
+function fecharSheetHistoricoDia(options = {}) {
+    const sheet = document.getElementById('historico-dia-sheet');
+    const conteudo = document.getElementById('historico-dia-sheet-conteudo');
+
+    if (!sheet) {
+        return;
+    }
+
+    if (!options.preservarDia) {
+        window.historicoMobileDiaAberto = null;
+    }
+
+    sheet.hidden = true;
+
+    if (conteudo) {
+        conteudo.innerHTML = '';
+    }
 }
 
 function montarCelulasRotina(horario, agendamentosNoHorario) {
@@ -805,6 +1087,8 @@ function atualizarFinanceiro() {
 }
 
 window.mostrarAba = function(aba) {
+    fecharSheetHistoricoDia();
+
     document.querySelectorAll('.aba-conteudo').forEach(sec => {
         sec.classList.remove('active');
         sec.style.display = 'none';
