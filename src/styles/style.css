@@ -556,6 +556,10 @@ button[type="submit"]:hover,
     display: none;
 }
 
+.historico-dia-card-espaco {
+    min-height: 74px;
+}
+
 .historico-dia-badge {
     display: inline-flex;
     align-items: center;
@@ -631,6 +635,10 @@ button[type="submit"]:hover,
     padding: 0 12px;
 }
 
+.historico-dia-sheet[hidden] {
+    display: none !important;
+}
+
 .historico-dia-sheet-card {
     width: min(100%, 420px);
     display: grid;
@@ -638,7 +646,7 @@ button[type="submit"]:hover,
     padding: 14px;
     border: 1px solid rgba(224, 205, 193, 0.75);
     border-radius: 24px;
-    background: rgba(255, 255, 255, 0.94);
+    background: rgba(255, 255, 255, 0.96);
     box-shadow: 0 24px 44px rgba(73, 50, 39, 0.22);
 }
 
@@ -685,7 +693,7 @@ button[type="submit"]:hover,
     display: grid;
     grid-template-columns: 62px 1fr;
     gap: 10px;
-    align-items: center;
+    align-items: flex-start;
     padding: 10px 12px;
     border-radius: 14px;
     background: linear-gradient(180deg, rgba(255, 248, 244, 0.98), rgba(251, 241, 235, 0.94));
@@ -705,6 +713,8 @@ button[type="submit"]:hover,
 
 .historico-dia-sheet-item small,
 .historico-dia-sheet-vazio p {
+    display: block;
+    margin-top: 2px;
     color: var(--text-soft);
     line-height: 1.45;
 }
@@ -793,6 +803,53 @@ button[type="submit"]:hover,
 
 .registro-card-fiado {
     background: linear-gradient(180deg, rgba(255, 251, 247, 0.98), rgba(252, 244, 238, 0.96));
+}
+
+.financeiro-card-compacto {
+    gap: 0;
+}
+
+.financeiro-card-topo-compacto {
+    margin-bottom: 8px;
+}
+
+.financeiro-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.financeiro-card-meta span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 26px;
+    padding: 4px 8px;
+    border-radius: var(--radius-pill);
+    background: rgba(245, 234, 226, 0.78);
+    color: var(--heading);
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+
+.financeiro-card-valor {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.financeiro-card-valor small {
+    color: var(--text-soft);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.financeiro-card-valor strong {
+    color: var(--brand-strong);
+    font-size: 1.05rem;
 }
 
 .registro-card-topo {
@@ -885,6 +942,13 @@ button[type="submit"]:hover,
     margin-right: 0;
 }
 
+.check-pago-card-compacto {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(236, 228, 227, 0.8);
+    font-size: 0.9rem;
+}
+
 .resumo-financeiro {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -955,6 +1019,21 @@ button[type="submit"]:hover,
 .observacao-fiado-card p {
     color: var(--text);
     line-height: 1.5;
+}
+
+.observacao-fiado-card-compacta {
+    margin-top: 0;
+    padding: 10px 12px;
+}
+
+.observacao-fiado-card-compacta span {
+    margin-bottom: 4px;
+    font-size: 0.82rem;
+}
+
+.observacao-fiado-card-compacta p {
+    font-size: 0.9rem;
+    line-height: 1.35;
 }
 
 .editando-alerta {
@@ -1209,6 +1288,17 @@ button[type="submit"]:hover,
     font-weight: 600;
 }
 
+.slot-acionavel,
+.rotina-mobile-item-acionavel {
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.slot-acionavel:hover,
+.rotina-mobile-item-acionavel:hover {
+    transform: translateY(-1px);
+}
+
 .slot-ocupado-lista {
     display: flex;
     flex-direction: column;
@@ -1232,6 +1322,15 @@ button[type="submit"]:hover,
 .slot-ocupado-item span {
     color: var(--text-soft);
     font-size: 0.92rem;
+}
+
+.btn-acao-inline {
+    width: fit-content;
+    min-height: 34px;
+    margin-top: 8px;
+    padding: 6px 12px;
+    font-size: 0.82rem;
+    box-shadow: 0 10px 18px rgba(143, 79, 56, 0.14);
 }
 
 .rotina-mobile-lista {
@@ -1400,7 +1499,39 @@ button[type="submit"]:hover,
     }
 
     body.dashboard-page {
-        padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+        padding-bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .historico-dia-sheet {
+        bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+        padding: 0 10px;
+    }
+
+    .historico-dia-sheet-card {
+        width: min(100%, 330px);
+        padding: 10px;
+        gap: 10px;
+    }
+
+    .historico-dia-sheet-item {
+        grid-template-columns: 56px 1fr;
+        padding: 9px 10px;
+    }
+
+    .historico-dia-sheet-topo strong {
+        font-size: 0.96rem;
+    }
+
+    .historico-dia-sheet-resumo {
+        gap: 8px;
+    }
+
+    .historico-dia-sheet-resumo .agenda-resumo-card {
+        padding: 10px 12px;
+    }
+
+    .historico-dia-sheet-resumo .agenda-resumo-card strong {
+        font-size: 1.05rem;
     }
 
     header {
@@ -1445,25 +1576,25 @@ button[type="submit"]:hover,
     }
 
     .layout {
-        margin: 12px 10px 24px;
-        border-radius: 22px;
+        margin: 10px 8px 18px;
+        border-radius: 18px;
         background: rgba(255, 250, 246, 0.72);
         overflow: visible;
     }
 
     .abas-lateral {
         position: fixed;
-        left: 10px;
-        right: 10px;
-        bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+        left: 8px;
+        right: 8px;
+        bottom: calc(8px + env(safe-area-inset-bottom, 0px));
         top: auto;
         z-index: 30;
-        gap: 10px;
+        gap: 6px;
         justify-content: space-between;
-        padding: 10px 8px;
-        border-radius: 18px;
+        padding: 6px;
+        border-radius: 16px;
         margin: 0;
-        box-shadow: 0 10px 28px rgba(143, 110, 89, 0.12);
+        box-shadow: 0 8px 20px rgba(143, 110, 89, 0.1);
         scrollbar-width: none;
     }
 
@@ -1474,22 +1605,24 @@ button[type="submit"]:hover,
     .aba-btn {
         flex: 1 1 0;
         min-width: 0;
-        min-height: 54px;
-        padding: 10px 12px;
-        font-size: 0.82rem;
-        line-height: 1.2;
-        box-shadow: 0 10px 20px rgba(143, 79, 56, 0.18);
+        min-height: 42px;
+        padding: 7px 6px;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        line-height: 1.1;
+        box-shadow: 0 8px 16px rgba(143, 79, 56, 0.15);
+        text-align: center;
     }
 
     .conteudo-abas {
-        padding: 12px 10px 8px;
+        padding: 8px 8px 6px;
     }
 
     .aba-conteudo,
     .login-section,
     .cadastro-section {
-        padding: 18px 14px;
-        border-radius: 20px;
+        padding: 14px 12px;
+        border-radius: 16px;
     }
 
     .login-section,
@@ -1502,7 +1635,8 @@ button[type="submit"]:hover,
     section h2,
     .login-section h2,
     .cadastro-section h2 {
-        font-size: 1.34rem;
+        margin-bottom: 12px;
+        font-size: 1.2rem;
         line-height: 1.2;
     }
 
@@ -1522,8 +1656,8 @@ button[type="submit"]:hover,
     }
 
     form {
-        padding: 16px 14px;
-        border-radius: 16px;
+        padding: 12px;
+        border-radius: 14px;
     }
 
     .linha-campos,
@@ -1546,14 +1680,14 @@ button[type="submit"]:hover,
     .filtro-grupo select,
     .filtro-grupo input,
     #dia-historico {
-        min-height: 50px;
-        padding: 13px 14px;
-        font-size: 0.98rem;
+        min-height: 44px;
+        padding: 10px 12px;
+        font-size: 0.94rem;
     }
 
     button[type="submit"],
     .btn-acao {
-        min-height: 48px;
+        min-height: 44px;
     }
 
     .filtros-financeiro,
@@ -1564,7 +1698,53 @@ button[type="submit"]:hover,
 
     .mobile-overview {
         display: block;
-        margin-bottom: 16px;
+        margin-bottom: 10px;
+    }
+
+    .mobile-overview-hero {
+        margin-bottom: 8px;
+        padding: 12px;
+        border-radius: 16px;
+    }
+
+    .mobile-overview-kicker {
+        margin-bottom: 6px;
+        padding: 5px 8px;
+        font-size: 0.7rem;
+    }
+
+    .mobile-overview-hero strong {
+        font-size: 1.08rem;
+    }
+
+    .mobile-overview-hero p {
+        margin-top: 4px;
+        font-size: 0.84rem;
+        line-height: 1.35;
+    }
+
+    .mobile-overview-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .mobile-overview-card {
+        padding: 10px 8px;
+        border-radius: 14px;
+    }
+
+    .mobile-overview-card span {
+        font-size: 0.68rem;
+        letter-spacing: 0.03em;
+    }
+
+    .mobile-overview-card strong {
+        margin-top: 4px;
+        font-size: 1.08rem;
+    }
+
+    .mobile-overview-card small {
+        display: none;
     }
 
     .agenda-diaria {
@@ -1616,12 +1796,14 @@ button[type="submit"]:hover,
     }
 
     .registro-card {
-        padding: 16px 14px;
+        padding: 12px;
         border-radius: 18px;
     }
 
     .registro-badge {
         width: fit-content;
+        padding: 5px 8px;
+        font-size: 0.74rem;
     }
 
     .registro-acoes .btn-acao {
@@ -1630,6 +1812,47 @@ button[type="submit"]:hover,
 
     .resumo-financeiro {
         grid-template-columns: 1fr;
+    }
+
+    .lista-cards-financeiro,
+    .lista-cards-fiados {
+        gap: 10px;
+    }
+
+    .financeiro-card-topo-compacto,
+    .registro-card-topo.financeiro-card-topo-compacto {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    .financeiro-card-topo-compacto strong {
+        font-size: 0.96rem;
+    }
+
+    .financeiro-card-meta {
+        margin-bottom: 8px;
+    }
+
+    .financeiro-card-meta span {
+        min-height: 24px;
+        padding: 3px 7px;
+        font-size: 0.72rem;
+    }
+
+    .financeiro-card-valor {
+        margin-bottom: 8px;
+    }
+
+    .financeiro-card-valor strong {
+        font-size: 1rem;
+    }
+
+    .check-pago-card-compacto {
+        margin-top: 6px;
+        padding-top: 6px;
+        font-size: 0.84rem;
     }
 
     .resumo-card {
@@ -1709,20 +1932,6 @@ button[type="submit"]:hover,
         display: none;
     }
 
-    .historico-dia-sheet {
-        bottom: calc(84px + env(safe-area-inset-bottom, 0px));
-        padding: 0 10px;
-    }
-
-    .historico-dia-sheet-card {
-        width: 100%;
-        padding: 12px;
-    }
-
-    .historico-dia-sheet-item {
-        grid-template-columns: 56px 1fr;
-        padding: 9px 10px;
-    }
 }
 
 .booking-page {

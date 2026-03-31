@@ -13,7 +13,6 @@ const horariosAgenda = gerarHorariosAgenda('08:00', '23:00');
 window.agendamentos = [];
 window.pagamentos = [];
 window.agendamentoEditando = null;
-window.historicoMobileDiaAberto = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     const form = document.getElementById('agendamento-form');
@@ -38,7 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     btnDiaProximo.addEventListener('click', () => navegarDiaHistorico(1));
     btnHoje.addEventListener('click', () => definirDiaHistorico(getHojeISO()));
     if (btnFecharSheetHistorico) {
-        btnFecharSheetHistorico.addEventListener('click', fecharSheetHistoricoDia);
+        btnFecharSheetHistorico.addEventListener('click', () => fecharSheetHistoricoDia({ preservarDia: true }));
     }
     selectMesFinanceiro.addEventListener('change', atualizarFinanceiro);
     selectStatusFinanceiro.addEventListener('change', atualizarFinanceiro);
@@ -506,13 +505,7 @@ function atualizarHistorico() {
 
         if (mobile) {
             renderizarCalendarioHistorico(calendario, diaSelecionado);
-            renderizarHistoricoMobilePlaceholder(lista);
-
-            if (window.historicoMobileDiaAberto) {
-                abrirSheetHistoricoDia(window.historicoMobileDiaAberto);
-            } else {
-                fecharSheetHistoricoDia({ preservarDia: true });
-            }
+            lista.innerHTML = '';
         } else {
             if (calendario) {
                 calendario.innerHTML = '';
@@ -630,23 +623,46 @@ function renderizarCalendarioHistorico(container, diaSelecionado) {
     const dataBase = criarDataLocal(diaSelecionado);
     const primeiroDiaMes = new Date(dataBase.getFullYear(), dataBase.getMonth(), 1);
     const ultimoDiaMes = new Date(dataBase.getFullYear(), dataBase.getMonth() + 1, 0);
-    const inicioGrade = new Date(primeiroDiaMes);
-    inicioGrade.setDate(primeiroDiaMes.getDate() - primeiroDiaMes.getDay());
     const hoje = getHojeISO();
-
     const dias = [];
-    for (let indice = 0; indice < 42; indice += 1) {
-        const dataCorrente = new Date(inicioGrade);
-        dataCorrente.setDate(inicioGrade.getDate() + indice);
-        const dataISO = formatarDataParaISO(dataCorrente);
-        const agendamentosDia = window.agendamentos.filter((agendamento) => agendamento.data === dataISO);
-        dias.push({
-            dataISO,
-            dia: dataCorrente.getDate(),
-            foraDoMes: dataCorrente.getMonth() !== dataBase.getMonth(),
-            total: agendamentosDia.length,
-            livres: Math.max(horariosAgenda.length - new Set(agendamentosDia.map((agendamento) => `${agendamento.hora.slice(0, 2)}:00`)).size, 0),
-        });
+
+    if (mobile) {
+        for (let indice = 0; indice < primeiroDiaMes.getDay(); indice += 1) {
+            dias.push({ vazio: true, chave: `vazio-${indice}` });
+        }
+
+        for (let dia = 1; dia <= ultimoDiaMes.getDate(); dia += 1) {
+            const dataCorrente = new Date(dataBase.getFullYear(), dataBase.getMonth(), dia);
+            const dataISO = formatarDataParaISO(dataCorrente);
+            const agendamentosDia = window.agendamentos.filter((agendamento) => agendamento.data === dataISO);
+
+            dias.push({
+                chave: dataISO,
+                dataISO,
+                dia,
+                foraDoMes: false,
+                total: agendamentosDia.length,
+                livres: Math.max(horariosAgenda.length - new Set(agendamentosDia.map((agendamento) => `${agendamento.hora.slice(0, 2)}:00`)).size, 0),
+            });
+        }
+    } else {
+        const inicioGrade = new Date(primeiroDiaMes);
+        inicioGrade.setDate(primeiroDiaMes.getDate() - primeiroDiaMes.getDay());
+
+        for (let indice = 0; indice < 42; indice += 1) {
+            const dataCorrente = new Date(inicioGrade);
+            dataCorrente.setDate(inicioGrade.getDate() + indice);
+            const dataISO = formatarDataParaISO(dataCorrente);
+            const agendamentosDia = window.agendamentos.filter((agendamento) => agendamento.data === dataISO);
+            dias.push({
+                chave: dataISO,
+                dataISO,
+                dia: dataCorrente.getDate(),
+                foraDoMes: dataCorrente.getMonth() !== dataBase.getMonth(),
+                total: agendamentosDia.length,
+                livres: Math.max(horariosAgenda.length - new Set(agendamentosDia.map((agendamento) => `${agendamento.hora.slice(0, 2)}:00`)).size, 0),
+            });
+        }
     }
 
     container.hidden = false;
@@ -656,7 +672,7 @@ function renderizarCalendarioHistorico(container, diaSelecionado) {
                 <div>
                     <span class="agenda-diaria-tag">Seleção rápida</span>
                     <h3>${nomesMeses[dataBase.getMonth()].charAt(0).toUpperCase() + nomesMeses[dataBase.getMonth()].slice(1)} / ${dataBase.getFullYear()}</h3>
-                    <p>Toque em um dia para abrir a rotina completa com horários livres e ocupados.</p>
+                    <p>${mobile ? 'Toque em um dia para abrir o resumo dos compromissos.' : 'Toque em um horário para abrir o detalhe do compromisso.'}</p>
                 </div>
                 <div class="historico-calendario-acoes">
                     <button type="button" class="btn-secundario" data-calendario-nav="-1">Mês anterior</button>
@@ -673,18 +689,24 @@ function renderizarCalendarioHistorico(container, diaSelecionado) {
                 <span>Sáb</span>
             </div>
             <div class="historico-calendario-grade">
-                ${dias.map((item) => `
-                    <button
-                        type="button"
-                        class="historico-dia-card${mobile ? ' historico-dia-card-mobile' : ''}${item.foraDoMes ? ' historico-dia-card-fora' : ''}${item.dataISO === diaSelecionado ? ' historico-dia-card-ativo' : ''}${item.dataISO === hoje ? ' historico-dia-card-hoje' : ''}${item.total ? ' historico-dia-card-ocupado' : ' historico-dia-card-livre'}"
-                        data-dia="${item.dataISO}"
-                    >
-                        <span class="historico-dia-numero">${item.dia}</span>
-                        ${mobile
-                            ? `${item.total ? `<span class="historico-dia-badge">${item.total}</span>` : '<span class="historico-dia-ponto"></span>'}`
-                            : `<strong>${item.total ? `${item.total} atendimento(s)` : 'Livre'}</strong><small>${item.total ? `${item.livres} horário(s) vagos` : 'Agenda vazia'}</small>`}
-                    </button>
-                `).join('')}
+                ${dias.map((item) => {
+                    if (item.vazio) {
+                        return '<span class="historico-dia-card-espaco" aria-hidden="true"></span>';
+                    }
+
+                    return `
+                        <button
+                            type="button"
+                            class="historico-dia-card${mobile ? ' historico-dia-card-mobile' : ''}${item.foraDoMes ? ' historico-dia-card-fora' : ''}${item.dataISO === diaSelecionado ? ' historico-dia-card-ativo' : ''}${item.dataISO === hoje ? ' historico-dia-card-hoje' : ''}${item.total ? ' historico-dia-card-ocupado' : ' historico-dia-card-livre'}"
+                            data-dia="${item.dataISO}"
+                        >
+                            <span class="historico-dia-numero">${item.dia}</span>
+                            ${mobile
+                                ? `${item.total ? `<span class="historico-dia-badge">${item.total}</span>` : '<span class="historico-dia-ponto"></span>'}`
+                                : `<strong>${item.total ? `${item.total} atendimento(s)` : 'Livre'}</strong><small>${item.total ? `${item.livres} horário(s) vagos` : 'Agenda vazia'}</small>`}
+                        </button>
+                    `;
+                }).join('')}
             </div>
         </section>
     `;
@@ -693,7 +715,6 @@ function renderizarCalendarioHistorico(container, diaSelecionado) {
         botao.addEventListener('click', () => {
             const dataSelecionada = botao.dataset.dia || diaSelecionado;
             definirDiaHistorico(dataSelecionada, { atualizar: false });
-            window.historicoMobileDiaAberto = dataSelecionada;
 
             if (mobile) {
                 renderizarCalendarioHistorico(container, dataSelecionada);
@@ -701,6 +722,7 @@ function renderizarCalendarioHistorico(container, diaSelecionado) {
                 return;
             }
 
+            fecharSheetHistoricoDia({ preservarDia: true });
             atualizarHistorico();
         });
     });
@@ -708,26 +730,10 @@ function renderizarCalendarioHistorico(container, diaSelecionado) {
     container.querySelectorAll('[data-calendario-nav]').forEach((botao) => {
         botao.addEventListener('click', () => {
             const direcao = Number(botao.dataset.calendarioNav || 0);
-            if (mobile) {
-                window.historicoMobileDiaAberto = null;
-                fecharSheetHistoricoDia({ preservarDia: true });
-            }
-
+            fecharSheetHistoricoDia({ preservarDia: true });
             definirDiaHistorico(adicionarMesDataISO(diaSelecionado, direcao));
         });
     });
-}
-
-function renderizarHistoricoMobilePlaceholder(container) {
-    container.innerHTML = `
-        <section class="historico-mobile-placeholder">
-            <div>
-                <span class="agenda-diaria-tag">Agenda móvel</span>
-                <h3>Escolha um dia</h3>
-                <p>O calendário mostra apenas os dias. Toque em qualquer data para abrir a aba com os compromissos.</p>
-            </div>
-        </section>
-    `;
 }
 
 function construirAgendaDiaria(diaSelecionado, agendamentosDia) {
@@ -781,7 +787,7 @@ function construirAgendaDiaria(diaSelecionado, agendamentosDia) {
 
             if (!agendamentosNoHorario.length) {
                 return `
-                    <article class="rotina-mobile-item rotina-mobile-item-livre">
+                    <article class="rotina-mobile-item rotina-mobile-item-livre rotina-mobile-item-acionavel" onclick="abrirSheetHorario('${diaSelecionado}', '${horario}')">
                         <div class="rotina-mobile-hora">${horario}</div>
                         <div class="rotina-mobile-conteudo">
                             <span class="rotina-mobile-status">Horario livre</span>
@@ -792,7 +798,7 @@ function construirAgendaDiaria(diaSelecionado, agendamentosDia) {
             }
 
             return `
-                <article class="rotina-mobile-item rotina-mobile-item-ocupado">
+                <article class="rotina-mobile-item rotina-mobile-item-ocupado rotina-mobile-item-acionavel" onclick="abrirSheetHorario('${diaSelecionado}', '${horario}')">
                     <div class="rotina-mobile-hora">${horario}</div>
                     <div class="rotina-mobile-conteudo">
                         <span class="rotina-mobile-status">${agendamentosNoHorario.length} atendimento(s)</span>
@@ -802,6 +808,7 @@ function construirAgendaDiaria(diaSelecionado, agendamentosDia) {
                                     <strong>${agendamento.nome}</strong>
                                     <span>${agendamento.hora} • ${agendamento.servico}</span>
                                     <small>R$ ${formatarValor(agendamento.valor)}</small>
+                                    <button type="button" class="btn-acao btn-acao-inline" onclick="event.stopPropagation(); editarAgendamento('${agendamento.id}')">Editar</button>
                                 </div>
                             `).join('')}
                         </div>
@@ -832,8 +839,8 @@ function construirAgendaDiaria(diaSelecionado, agendamentosDia) {
                 const horaDireita = colunaDireita[index];
                 return `
                     <tr>
-                        ${montarCelulasRotina(horaEsquerda, agendamentosPorHora.get(horaEsquerda) || [])}
-                        ${horaDireita ? montarCelulasRotina(horaDireita, agendamentosPorHora.get(horaDireita) || []) : '<td></td><td></td>'}
+                        ${montarCelulasRotina(diaSelecionado, horaEsquerda, agendamentosPorHora.get(horaEsquerda) || [])}
+                        ${horaDireita ? montarCelulasRotina(diaSelecionado, horaDireita, agendamentosPorHora.get(horaDireita) || []) : '<td></td><td></td>'}
                     </tr>
                 `;
             }).join('')}
@@ -846,6 +853,8 @@ function construirAgendaDiaria(diaSelecionado, agendamentosDia) {
 }
 
 function renderizarHistoricoDiario(container, agendamentosDia, diaSelecionado) {
+    container.innerHTML = '';
+
     if (!diaSelecionado) {
         container.innerHTML = '<p>Selecione um dia para visualizar a rotina.</p>';
         return;
@@ -854,59 +863,109 @@ function renderizarHistoricoDiario(container, agendamentosDia, diaSelecionado) {
     container.appendChild(construirAgendaDiaria(diaSelecionado, agendamentosDia));
 }
 
-function abrirSheetHistoricoDia(diaSelecionado) {
+function abrirSheetHistoricoDia(diaSelecionado, horarioSelecionado = '') {
     const sheet = document.getElementById('historico-dia-sheet');
     const conteudo = document.getElementById('historico-dia-sheet-conteudo');
     const titulo = document.getElementById('historico-dia-sheet-titulo');
 
-    if (!sheet || !conteudo || !titulo) {
+    if (!sheet || !conteudo || !titulo || !diaSelecionado) {
         return;
     }
 
-    const agendamentosDia = window.agendamentos
-        .filter((agendamento) => agendamento.data === diaSelecionado)
-        .sort((a, b) => a.hora.localeCompare(b.hora));
-    const horariosOcupados = new Set(agendamentosDia.map((agendamento) => `${agendamento.hora.slice(0, 2)}:00`));
-    const horariosLivres = horariosAgenda.filter((horario) => !horariosOcupados.has(horario)).length;
+    if (horarioSelecionado) {
+        const agendamentosHorario = window.agendamentos
+            .filter((agendamento) => agendamento.data === diaSelecionado && `${agendamento.hora.slice(0, 2)}:00` === horarioSelecionado)
+            .sort((a, b) => a.hora.localeCompare(b.hora));
 
-    titulo.textContent = formatarDataBR(diaSelecionado);
-    conteudo.innerHTML = `
-        <div class="historico-dia-sheet-resumo">
-            <article class="agenda-resumo-card">
-                <span>Atendimentos</span>
-                <strong>${agendamentosDia.length}</strong>
-            </article>
-            <article class="agenda-resumo-card">
-                <span>Horários vagos</span>
-                <strong>${horariosLivres}</strong>
-            </article>
-        </div>
-        <div class="historico-dia-sheet-corpo">
-            ${agendamentosDia.length
-                ? `
-                    <div class="historico-dia-sheet-lista">
-                        ${agendamentosDia.map((agendamento) => `
-                            <article class="historico-dia-sheet-item">
-                                <strong>${agendamento.hora}</strong>
-                                <div>
-                                    <span>${agendamento.nome}</span>
-                                    <small>${agendamento.servico}</small>
-                                </div>
-                            </article>
-                        `).join('')}
-                    </div>
-                `
-                : `
-                    <div class="historico-dia-sheet-vazio">
-                        <strong>Dia livre</strong>
-                        <p>Não há compromissos marcados para esta data.</p>
-                    </div>
-                `}
-        </div>
-    `;
+        titulo.textContent = `${formatarDataBR(diaSelecionado)} • ${horarioSelecionado}`;
+        conteudo.innerHTML = `
+            <div class="historico-dia-sheet-resumo">
+                <article class="agenda-resumo-card">
+                    <span>Status</span>
+                    <strong>${agendamentosHorario.length ? 'Ocupado' : 'Livre'}</strong>
+                </article>
+                <article class="agenda-resumo-card">
+                    <span>Atendimentos</span>
+                    <strong>${agendamentosHorario.length}</strong>
+                </article>
+            </div>
+            <div class="historico-dia-sheet-corpo">
+                ${agendamentosHorario.length
+                    ? `
+                        <div class="historico-dia-sheet-lista">
+                            ${agendamentosHorario.map((agendamento) => `
+                                <article class="historico-dia-sheet-item">
+                                    <strong>${agendamento.hora}</strong>
+                                    <div>
+                                        <span>${agendamento.nome}</span>
+                                        <small>${agendamento.servico}</small>
+                                        <button type="button" class="btn-acao btn-acao-inline" onclick="event.stopPropagation(); editarAgendamento('${agendamento.id}')">Editar</button>
+                                    </div>
+                                </article>
+                            `).join('')}
+                        </div>
+                    `
+                    : `
+                        <div class="historico-dia-sheet-vazio">
+                            <strong>Horário livre</strong>
+                            <p>Não há compromissos marcados para este horário.</p>
+                        </div>
+                    `}
+            </div>
+        `;
+    } else {
+        const agendamentosDia = window.agendamentos
+            .filter((agendamento) => agendamento.data === diaSelecionado)
+            .sort((a, b) => a.hora.localeCompare(b.hora));
+
+        titulo.textContent = formatarDataBR(diaSelecionado);
+        conteudo.innerHTML = `
+            <div class="historico-dia-sheet-resumo">
+                <article class="agenda-resumo-card">
+                    <span>Status</span>
+                    <strong>${agendamentosDia.length ? 'Ocupado' : 'Livre'}</strong>
+                </article>
+                <article class="agenda-resumo-card">
+                    <span>Atendimentos</span>
+                    <strong>${agendamentosDia.length}</strong>
+                </article>
+            </div>
+            <div class="historico-dia-sheet-corpo">
+                ${agendamentosDia.length
+                    ? `
+                        <div class="historico-dia-sheet-lista">
+                            ${agendamentosDia.map((agendamento) => `
+                                <article class="historico-dia-sheet-item">
+                                    <strong>${agendamento.hora}</strong>
+                                    <div>
+                                        <span>${agendamento.nome}</span>
+                                        <small>${agendamento.servico}</small>
+                                        <button type="button" class="btn-acao btn-acao-inline" onclick="event.stopPropagation(); editarAgendamento('${agendamento.id}')">Editar</button>
+                                    </div>
+                                </article>
+                            `).join('')}
+                        </div>
+                    `
+                    : `
+                        <div class="historico-dia-sheet-vazio">
+                            <strong>Dia livre</strong>
+                            <p>Não há compromissos marcados para esta data.</p>
+                        </div>
+                    `}
+            </div>
+        `;
+    }
 
     sheet.hidden = false;
 }
+
+window.abrirSheetHorario = function(diaSelecionado, horarioSelecionado) {
+    if (!diaSelecionado || !horarioSelecionado) {
+        return;
+    }
+
+    abrirSheetHistoricoDia(diaSelecionado, horarioSelecionado);
+};
 
 function fecharSheetHistoricoDia(options = {}) {
     const sheet = document.getElementById('historico-dia-sheet');
@@ -927,22 +986,23 @@ function fecharSheetHistoricoDia(options = {}) {
     }
 }
 
-function montarCelulasRotina(horario, agendamentosNoHorario) {
+function montarCelulasRotina(diaSelecionado, horario, agendamentosNoHorario) {
     if (!agendamentosNoHorario.length) {
         return `
             <td class="horario-rotina">${horario}</td>
-            <td class="slot-livre">Horario livre</td>
+            <td class="slot-livre slot-acionavel" onclick="abrirSheetHorario('${diaSelecionado}', '${horario}')">Horario livre</td>
         `;
     }
 
     return `
         <td class="horario-rotina">${horario}</td>
-        <td>
+        <td class="slot-acionavel" onclick="abrirSheetHorario('${diaSelecionado}', '${horario}')">
             <div class="slot-ocupado-lista">
                 ${agendamentosNoHorario.map((agendamento) => `
                     <div class="slot-ocupado-item">
                         <strong>${agendamento.nome}</strong>
                         <span>${agendamento.hora} • ${agendamento.servico}</span>
+                        <button type="button" class="btn-acao btn-acao-inline" onclick="event.stopPropagation(); editarAgendamento('${agendamento.id}')">Editar</button>
                     </div>
                 `).join('')}
             </div>
@@ -1022,18 +1082,23 @@ function atualizarFinanceiro() {
             }
 
             return `
-                <article class="registro-card financeiro-card">
-                    <div class="registro-card-topo">
+                <article class="registro-card financeiro-card financeiro-card-compacto">
+                    <div class="registro-card-topo financeiro-card-topo-compacto">
                         <strong>${agendamento.nome}</strong>
                         <span class="registro-badge ${p.status === 'pago' ? 'registro-badge-pago' : ''}">${p.status}</span>
                     </div>
-                    <div class="registro-linha"><span>Data</span><strong>${formatarDataBR(agendamento.data)}</strong></div>
-                    <div class="registro-linha"><span>Serviço</span><strong>${agendamento.servico}</strong></div>
-                    <div class="registro-linha"><span>Método</span><strong>${formatarMetodoPagamento(p.metodoPagamento)}</strong></div>
-                    <div class="registro-linha"><span>Valor</span><strong>R$ ${formatarValor(p.valor)}</strong></div>
-                    <label class="check-pago-card">
+                    <div class="financeiro-card-meta">
+                        <span>${formatarDataBR(agendamento.data)}</span>
+                        <span>${agendamento.servico}</span>
+                        <span>${formatarMetodoPagamento(p.metodoPagamento)}</span>
+                    </div>
+                    <div class="financeiro-card-valor">
+                        <small>Valor</small>
+                        <strong>R$ ${formatarValor(p.valor)}</strong>
+                    </div>
+                    <label class="check-pago-card check-pago-card-compacto">
                         <input type="checkbox" class="check-pago" ${p.status === "pago" ? "checked" : ""} onchange="togglePago('${p.id}')">
-                        <span>Marcar como pago</span>
+                        <span>${p.status === 'pago' ? 'Pago' : 'Marcar como pago'}</span>
                     </label>
                 </article>
             `;
@@ -1087,7 +1152,9 @@ function atualizarFinanceiro() {
 }
 
 window.mostrarAba = function(aba) {
-    fecharSheetHistoricoDia();
+    if (aba !== 'historico') {
+        fecharSheetHistoricoDia();
+    }
 
     document.querySelectorAll('.aba-conteudo').forEach(sec => {
         sec.classList.remove('active');
@@ -1186,22 +1253,27 @@ function renderizarFiados(container, pagamentosFiados, agendamentoPorId) {
             }
 
             return `
-                <article class="registro-card registro-card-fiado">
-                    <div class="registro-card-topo">
+                <article class="registro-card registro-card-fiado financeiro-card-compacto">
+                    <div class="registro-card-topo financeiro-card-topo-compacto">
                         <strong>${agendamento.nome}</strong>
-                        <span class="registro-badge registro-badge-fiado">Fiado</span>
+                        <span class="registro-badge registro-badge-fiado">${pagamento.status === 'pago' ? 'Fiado pago' : 'Fiado'}</span>
                     </div>
-                    <div class="registro-linha"><span>Data</span><strong>${formatarDataBR(agendamento.data)}</strong></div>
-                    <div class="registro-linha"><span>Serviço</span><strong>${agendamento.servico}</strong></div>
-                    <div class="registro-linha"><span>Valor</span><strong>R$ ${formatarValor(pagamento.valor)}</strong></div>
-                    <div class="registro-linha"><span>Status</span><strong>${pagamento.status}</strong></div>
-                    <div class="observacao-fiado-card">
+                    <div class="financeiro-card-meta">
+                        <span>${formatarDataBR(agendamento.data)}</span>
+                        <span>${agendamento.servico}</span>
+                        <span>${pagamento.status}</span>
+                    </div>
+                    <div class="financeiro-card-valor">
+                        <small>Valor</small>
+                        <strong>R$ ${formatarValor(pagamento.valor)}</strong>
+                    </div>
+                    <div class="observacao-fiado-card observacao-fiado-card-compacta">
                         <span>Observação</span>
-                        <p>${pagamento.observacao || 'Sem observações registradas.'}</p>
+                        <p>${resumirTexto(pagamento.observacao || 'Sem observações registradas.', 70)}</p>
                     </div>
-                    <label class="check-pago-card">
+                    <label class="check-pago-card check-pago-card-compacto">
                         <input type="checkbox" class="check-pago" ${pagamento.status === "pago" ? "checked" : ""} onchange="togglePago('${pagamento.id}')">
-                        <span>Marcar como pago</span>
+                        <span>${pagamento.status === 'pago' ? 'Pago' : 'Marcar como pago'}</span>
                     </label>
                 </article>
             `;
@@ -1264,6 +1336,14 @@ function formatarMetodoPagamento(valor) {
     };
 
     return mapa[valor] || valor;
+}
+
+function resumirTexto(texto, limite = 70) {
+    if (!texto || texto.length <= limite) {
+        return texto;
+    }
+
+    return `${texto.slice(0, limite).trimEnd()}...`;
 }
 
 function formatarValor(valor) {
@@ -1330,7 +1410,10 @@ window.editarAgendamento = function(id) {
     document.getElementById('observacao-fiado').value = pagamento?.observacao || '';
     toggleCampoObservacaoFiado();
     window.agendamentoEditando = { id: ag.id };
+    fecharSheetHistoricoDia();
+    window.mostrarAba('agendamento');
     mostrarAlertaEdicao(ag);
+    document.getElementById('agendamento-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 
 function mostrarAlertaEdicao(ag) {
